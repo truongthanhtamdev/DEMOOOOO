@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; background: #C4564A; }
+    a { color: #FFF6E7; text-decoration: none; }
+    a:hover { color: #FBE3D3; }
+    .disp { font-family: "Baloo 2", "Trebuchet MS", sans-serif; }
+  </style>
+</helmet>
+
+<div style="width: 1080px; height: 1080px; box-sizing: border-box; background: {{accent}}; color: #FFF6E7; font-family: 'Be Vietnam Pro', system-ui, sans-serif; padding: 68px 70px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <div style="position: absolute; left: -150px; bottom: -150px; width: 480px; height: 480px; border-radius: 50%; border: 4px dashed rgba(255, 246, 231, 0.28);"></div>
+  <div style="position: absolute; right: -120px; top: -120px; width: 360px; height: 360px; border-radius: 50%; background: rgba(255, 246, 231, 0.08);"></div>
+
+  <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <svg width="70" height="70" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <circle cx="50" cy="50" r="46" stroke="rgba(255,246,231,0.55)" stroke-width="3"/>
+        <path d="M18 46 L50 20 L82 46" stroke="#FFF6E7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="68" y="24" width="9" height="14" rx="3" fill="#FFF6E7"/>
+        <path d="M50 30 c3-4 9-1 6 4 c-1.6 2.6-4.4 4.6-6 5.6 c-1.6-1-4.4-3-6-5.6 c-3-5 3-8 6-4 z" fill="#E9A93C"/>
+        <path d="M25 50 V74" stroke="#FFF6E7" stroke-width="7" stroke-linecap="round"/>
+        <path d="M75 50 V74" stroke="#FFF6E7" stroke-width="7" stroke-linecap="round"/>
+        <path d="M50 63 c-6-5-15-5-22-2 v14 c7-3 16-3 22 2 c6-5 15-5 22-2 V61 c-7-3-16-3-22 2 z" fill="#FFF6E7"/>
+      </svg>
+      <div class="disp" style="font-size: 30px; font-weight: 800;">Tiếng Việt Nhà Mình</div>
+    </div>
+    <div class="disp" style="flex-shrink: 0; background: #E9A93C; color: #4A2C20; font-size: 22px; font-weight: 800; padding: 12px 26px; border-radius: 999px;">Chỉ còn [4] chỗ</div>
+  </div>
+
+  <div style="position: relative; margin-top: 56px;">
+    <div style="font-size: 20px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #FBD9C6;">Khai giảng lớp mới</div>
+    <h1 class="disp" style="margin: 14px 0 0; font-size: 104px; font-weight: 800; line-height: 1.0; letter-spacing: -0.015em;">
+      Tiếng Việt<br>&amp; Toán<br><span style="color: #E9A93C;">cho con</span>
+    </h1>
+  </div>
+
+  <div style="flex-grow: 1;"></div>
+
+  <div style="position: relative; display: flex; flex-wrap: wrap; gap: 14px;">
+    <div class="disp" style="border: 2px solid rgba(255,246,231,0.5); border-radius: 999px; padding: 12px 26px; font-size: 24px; font-weight: 600;">6 – 12 tuổi</div>
+    <div class="disp" style="border: 2px solid rgba(255,246,231,0.5); border-radius: 999px; padding: 12px 26px; font-size: 24px; font-weight: 600;">Lớp 4 bé</div>
+    <div class="disp" style="border: 2px solid rgba(255,246,231,0.5); border-radius: 999px; padding: 12px 26px; font-size: 24px; font-weight: 600;">Học online</div>
+    <div class="disp" style="border: 2px solid rgba(255,246,231,0.5); border-radius: 999px; padding: 12px 26px; font-size: 24px; font-weight: 600;">Cô giáo Việt Nam</div>
+    <div class="disp" style="border: 2px solid rgba(255,246,231,0.5); border-radius: 999px; padding: 12px 26px; font-size: 24px; font-weight: 600;">Theo múi giờ của con</div>
+  </div>
+
+  <div style="position: relative; margin-top: 34px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #FBD9C6;">Ngày khai giảng</div>
+      <div class="disp" style="font-size: 34px; font-weight: 800;">[05 · 10 · 2026]</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #FBD9C6;">Buổi học</div>
+      <div class="disp" style="font-size: 34px; font-weight: 800;">[T7 &amp; CN · 9:00]</div>
+    </div>
+  </div>
+
+  <div style="position: relative; margin-top: 36px; background: #FFF6E7; border-radius: 30px; padding: 26px 34px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <div class="disp" style="font-size: 36px; font-weight: 800; color: {{accent}};">Nhắn tin nhận buổi học thử</div>
+    <div class="disp" style="flex-shrink: 0; font-size: 30px; font-weight: 800; color: #5B3A2E;">[+84 900 000 000]</div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#C4564A","options":["#C4564A","#B0413B","#4F7A5B","#5B3A2E"]},"$preview":{"width":1080,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#C4564A' };
+  }
+}
+</script>
+</body>
+</html>
