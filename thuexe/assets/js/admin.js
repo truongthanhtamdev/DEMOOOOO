@@ -8,6 +8,32 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var esc = S.esc, fmtVND = S.fmtVND, fmtShort = S.fmtShort, fmtDate = S.fmtDate;
 
+
+  /* ====================== bộ icon (SVG nội tuyến) ====================== */
+  var SV = function (d, extra) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+      'stroke-linecap="round" stroke-linejoin="round">' + d + (extra || '') + '</svg>';
+  };
+  var ICON = {
+    home: SV('<path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/>'),
+    money: SV('<rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/>'),
+    cars: SV('<path d="M5 17h14"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/><path d="M3 14l1.2-4.2A3 3 0 0 1 7.1 7h9.8a3 3 0 0 1 2.9 2.3L21 14v3H3z"/>'),
+    contracts: SV('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>'),
+    alerts: SV('<path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/>'),
+    leads: SV('<path d="M3 6.5h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l9 6.5L21 7"/>'),
+    expenses: SV('<path d="M12 2v20"/><path d="M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.7 5 3.2 5 1.3 5 3.3-2.2 3.2-5 3.2-5-1.3-5-3.2"/>'),
+    profit: SV('<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3.5-4 3 2.4L20 7"/>'),
+    customers: SV('<circle cx="9" cy="8" r="3.4"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5S15 16.7 15 20"/><path d="M16 4.5a3.4 3.4 0 0 1 0 7M18 14.8c2.4.6 3.9 2.5 3.9 5.2"/>'),
+    dot: SV('<circle cx="12" cy="12" r="8"/>'),
+    clock: SV('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),
+    wallet: SV('<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/><path d="M3 7.5V17a2.5 2.5 0 0 0 2.5 2.5H19a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2H5.5"/><circle cx="16.5" cy="13.7" r="1.2"/>'),
+    plus: SV('<path d="M12 5v14M5 12h14"/>'),
+    download: SV('<path d="M12 3v12"/><path d="M7.5 11L12 15.5 16.5 11"/><path d="M4 19.5h16"/>'),
+    upload: SV('<path d="M12 15.5V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4 19.5h16"/>'),
+    phone: SV('<path d="M21.5 16.9v2.6a2 2 0 0 1-2.2 2 19.5 19.5 0 0 1-8.5-3 19 19 0 0 1-5.9-5.9 19.5 19.5 0 0 1-3-8.6A2 2 0 0 1 3.9 2h2.6a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L7.6 9.7a15.5 15.5 0 0 0 5.9 5.9l1.1-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>'),
+    check: SV('<path d="M20 6.5L9.5 17 4.5 12"/>')
+  };
+
   /* ====================== tiện ích UI ====================== */
   function toast(msg, kind) {
     var el = document.createElement('div');
@@ -111,6 +137,26 @@
     }).join('\n');
   }
 
+  /* ====================== nền sáng/tối, ngăn kéo menu ====================== */
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('thuexe.theme', t); } catch (e) { }
+  }
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('thuexe.theme'); } catch (e) { }
+  applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+  $('#btn-theme').addEventListener('click', function () {
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+  function drawer(open) {
+    $('#side').classList.toggle('open', open);
+    $('#scrim').classList.toggle('on', open);
+  }
+  $('#btn-menu').addEventListener('click', function () {
+    drawer(!$('#side').classList.contains('open'));
+  });
+  $('#scrim').addEventListener('click', function () { drawer(false); });
+
   /* ====================== phiên đăng nhập (demo) ====================== */
   var ME = { role: 'owner', name: 'Anh Tâm' };
   var ROLE_TEXT = { owner: 'Chủ xe — toàn quyền', staff: 'Nhân viên — hạn chế tài chính' };
@@ -147,16 +193,29 @@
     { k: 'customers', t: 'Khách hàng', r: renderCustomers }
   ];
   var TAB_KEYS = [], current = 'home';
+  var GROUPS = [
+    ['Theo dõi hằng ngày', ['home', 'money', 'alerts']],
+    ['Vận hành', ['cars', 'contracts', 'leads']],
+    ['Sổ sách', ['expenses', 'profit', 'customers']]
+  ];
   function visibleTabs() { return TABS.filter(function (t) { return !t.owner || isOwner(); }); }
   function buildTabs() {
     var list = visibleTabs();
     TAB_KEYS = list.map(function (t) { return t.k; });
-    $('#tabs').innerHTML = list.map(function (t) {
-      var n = t.badge ? t.badge() : 0;
-      return '<button data-tab="' + t.k + '"' + (t.k === current ? ' class="on"' : '') + '>' + esc(t.t) +
-        (n ? '<span class="dot' + (t.info ? ' info' : '') + '">' + n + '</span>' : '') + '</button>';
+    $('#tabs').innerHTML = GROUPS.map(function (g) {
+      var items = list.filter(function (t) { return g[1].indexOf(t.k) >= 0; });
+      if (!items.length) return '';
+      return '<div class="grp">' + g[0] + '</div>' + items.map(function (t) {
+        var n = t.badge ? t.badge() : 0;
+        return '<button class="nav-item' + (t.k === current ? ' on' : '') + '" data-tab="' + t.k + '">' +
+          '<span class="ic">' + ICON[t.k] + '</span>' + esc(t.t) +
+          (n ? '<span class="dot' + (t.info ? ' info' : '') + '">' + n + '</span>' : '') + '</button>';
+      }).join('');
     }).join('');
+    var tab = TABS.filter(function (t) { return t.k === current; })[0];
+    if (tab) $('#page-title').textContent = tab.t;
   }
+
   $('#tabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-tab]');
     if (b) go(b.getAttribute('data-tab'));
@@ -165,6 +224,7 @@
     current = k;
     var tab = TABS.filter(function (t) { return t.k === k; })[0] || TABS[0];
     buildTabs();
+    drawer(false);
     $('#view').innerHTML = '';
     tab.r($('#view'));
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -194,35 +254,42 @@
       '<p class="muted small" style="margin:0">Hôm nay ' + fmtDate(S.toISO(t)) + ' · ' + d.cars.length + ' xe · tỷ lệ khai thác ' +
       Math.round(rented / d.cars.length * 100) + '%</p></div>' +
       '<div class="btn-row">' +
-      '<button class="btn" data-act="new-contract">+ Hợp đồng mới</button>' +
-      '<button class="btn ghost" data-act="new-car">+ Thêm xe</button>' +
+      '<button class="btn" data-act="new-contract">' + ICON.plus + 'Hợp đồng mới</button>' +
+      '<button class="btn ghost" data-act="new-car">' + ICON.cars + 'Thêm xe</button>' +
       '</div></div>' +
 
       '<div class="kpis">' +
-      kpi('Công nợ quá hạn', fmtShort(odSum) + '₫', od.length + ' kỳ chưa thu', od.length ? 'alert' : 'good') +
-      kpi('Sắp tới hạn 7 ngày', fmtShort(due7.reduce(function (s, p) { return s + p.amount; }, 0)) + '₫', due7.length + ' kỳ cần nhắc', due7.length ? 'warn' : '') +
-      (isOwner() ? kpi('Đã thu tháng này', fmtShort(rev) + '₫', 'Chi ' + fmtShort(exp) + '₫ · trả góp ' + fmtShort(loan) + '₫', 'good') : '') +
-      kpi('Xe đang cho thuê', rented + '/' + d.cars.length, free + ' trống · ' + maint + ' bảo dưỡng', free > 3 ? 'warn' : '') +
-      kpi('Nhắc hạn 30 ngày', alerts.length, 'Đăng kiểm · bảo hiểm · bảo dưỡng', alerts.length ? 'warn' : 'good') +
-      kpi('Yêu cầu mới từ web', newLeads.length, newLeads.length ? 'Cần gọi lại' : 'Đã xử lý hết', newLeads.length ? 'alert' : 'good') +
+      kpi('Công nợ quá hạn', S.fmtMil(odSum), od.length + ' kỳ chưa thu', od.length ? 'alert' : 'good', ICON.wallet) +
+      kpi('Tới hạn 7 ngày', S.fmtMil(due7.reduce(function (s, p) { return s + p.amount; }, 0)), due7.length + ' kỳ cần nhắc', due7.length ? 'warn' : '', ICON.clock) +
+      (isOwner() ? kpi('Đã thu tháng này', S.fmtMil(rev), 'Chi ' + fmtShort(exp) + '₫ · trả góp ' + fmtShort(loan) + '₫', 'good', ICON.profit) : '') +
+      kpi('Đang cho thuê', rented + '/' + d.cars.length, free + ' trống · ' + maint + ' bảo dưỡng', free > 3 ? 'warn' : '', ICON.cars) +
+      kpi('Nhắc hạn 30n', alerts.length, 'Đăng kiểm · bảo hiểm · bảo dưỡng', alerts.length ? 'warn' : 'good', ICON.alerts) +
+      kpi('Yêu cầu mới', newLeads.length, newLeads.length ? 'Cần gọi lại' : 'Đã xử lý hết', newLeads.length ? 'alert' : 'good', ICON.leads) +
       '</div>' +
 
       '<div class="panel" style="margin-bottom:16px">' +
-      '<header><h3>Lịch xe 6 tháng</h3><span class="tiny muted">Xanh: đang thuê · Vàng: hết hạn trong 30 ngày · Viền xanh lá: trống</span></header>' +
+      '<header><h3>Lịch xe 6 tháng</h3>' +
+      '<div class="tl-legend">' +
+      '<span><i style="background:var(--brand)"></i>Đang thuê</span>' +
+      '<span><i style="background:var(--warn)"></i>Hết hạn trong 30 ngày</span>' +
+      '<span><i style="background:var(--ok-soft);border:1px dashed var(--ok)"></i>Xe trống</span>' +
+      '<span><i style="background:var(--danger)"></i>Hôm nay</span>' +
+      '</div></header>' +
       '<div class="card-pad">' + timeline() + '</div></div>' +
 
       '<div class="panels">' +
       panel('Cần thu tiền ngay', od.slice(0, 6).map(function (p) {
         var ct = S.contract(p.contractId);
-        return li(custLabel(ct && ct.customerId) + ' · ' + fmtShort(p.amount) + '₫',
-          carLabel(ct && ct.carId) + ' · kỳ ' + S.fmtMonth(p.dueDate) +
-          ' · <b style="color:var(--danger)">' + (p.lateDays > 0 ? 'trễ ' + p.lateDays + ' ngày' : 'đến hạn hôm nay') + '</b>',
+        return li(custLabel(ct && ct.customerId) + ' · ' + S.fmtMil(p.amount),
+          carLabel(ct && ct.carId) + ' · kỳ ' + S.fmtMonth(p.dueDate) + '<br>' +
+          '<b style="color:var(--danger)">' + (p.lateDays > 0 ? 'Trễ ' + p.lateDays + ' ngày' : 'Đến hạn hôm nay') + '</b>',
           '<button class="btn sm" data-act="pay" data-id="' + p.id + '">Đã thu</button>');
       }), 'Không có ai nợ. Tuyệt vời!', 'money') +
 
       panel('Nhắc hạn gần nhất', alerts.slice(0, 6).map(function (a) {
         return li(a.kind + ' · ' + carLabel(a.carId),
-          (a.left < 0 ? '<b style="color:var(--danger)">Đã quá hạn</b> · ' : a.left <= 7 ? '<b style="color:var(--warn)">Còn ' + a.left + ' ngày</b> · ' : 'Còn ' + a.left + ' ngày · ') + a.detail,
+          a.detail + '<br>' + (a.left < 0 ? '<b style="color:var(--danger)">Đã quá hạn</b>'
+            : a.left <= 7 ? '<b style="color:var(--warn)">Còn ' + a.left + ' ngày</b>' : 'Còn ' + a.left + ' ngày'),
           '<button class="btn ghost sm" data-act="edit-car" data-id="' + a.carId + '">Mở xe</button>');
       }), 'Chưa có hạn nào tới trong 30 ngày.', 'alerts') +
 
@@ -239,8 +306,10 @@
       }), 'Chưa có yêu cầu mới.', 'leads') +
       '</div>';
   }
-  function kpi(lbl, val, sub, cls) {
-    return '<div class="kpi ' + (cls || '') + '"><div class="lbl">' + esc(lbl) + '</div>' +
+  function kpi(lbl, val, sub, cls, icon) {
+    return '<div class="kpi ' + (cls || '') + '">' +
+      '<div class="top"><span class="ic">' + (icon || ICON.dot) + '</span>' +
+      '<span class="lbl">' + esc(lbl) + '</span></div>' +
       '<div class="val">' + val + '</div><div class="sub">' + (sub || '') + '</div></div>';
   }
   function li(title, sub, right) {
@@ -266,7 +335,8 @@
       var m = new Date(from.getFullYear(), from.getMonth() + i, 1);
       months.push('<span>T' + (m.getMonth() + 1) + '</span>');
     }
-    var head = '<div class="tl-months"><div></div><div class="cols" style="grid-template-columns:repeat(6,1fr)">' + months.join('') + '</div></div>';
+    var head = '<div class="tl-months"><div></div><div class="cols">' + months.join('') + '</div></div>';
+    var gridCells = '<div class="tl-grid"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
 
     var rows = d.cars.map(function (c) {
       var ct = S.activeContractOfCar(c.id), bar;
@@ -282,8 +352,8 @@
       } else {
         bar = '<div class="tl-bar free" style="left:0;width:100%">Trống — cần tìm khách</div>';
       }
-      return '<div class="tl-row"><div class="tl-name" title="' + esc(c.name) + '">' + esc(c.plate) + ' · ' + esc(c.name) + '</div>' +
-        '<div class="tl-track">' + bar + '<div class="tl-today" style="left:' + pct(t) + '%"></div></div></div>';
+      return '<div class="tl-row"><div class="tl-name" title="' + esc(c.name) + '"><b>' + esc(c.plate) + '</b> · ' + esc(c.name) + '</div>' +
+        '<div class="tl-track">' + gridCells + bar + '<div class="tl-today" style="left:' + pct(t) + '%"></div></div></div>';
     }).join('');
     return '<div class="timeline">' + head + rows + '</div>';
   }
@@ -310,7 +380,7 @@
     root.innerHTML =
       '<div class="view-head"><div><h2>Thu tiền theo kỳ</h2>' +
       '<p class="muted small" style="margin:0">Mỗi hợp đồng tự sinh các kỳ thu theo tháng. Đánh dấu “Đã thu” là hết nợ kỳ đó.</p></div>' +
-      '<div class="btn-row"><button class="btn ghost" data-act="export-money">Xuất Excel (CSV)</button></div></div>' +
+      '<div class="btn-row"><button class="btn ghost" data-act="export-money">' + ICON.download + 'Xuất Excel (CSV)</button></div></div>' +
 
       '<div class="toolbar"><div class="seg">' +
       ['overdue|Cần thu ngay (' + counts.overdue + ')', 'soon|Tới hạn 7 ngày (' + counts.soon + ')',
@@ -340,7 +410,7 @@
             : '<button class="btn sm" data-act="pay" data-id="' + p.id + '">Đã thu</button>' +
             ' <a class="btn ghost sm" href="sms:' + esc(((S.customer(r.ct.customerId) || {}).phone || '').replace(/\s/g, '')) +
             '?body=' + encodeURIComponent(nudgeText(r)) + '">Nhắc</a>') + '</td></tr>';
-      }).join('') : '<tr><td colspan="7" class="center muted" style="padding:28px">Không có kỳ nào trong nhóm này.</td></tr>') +
+      }).join('') : '<tr class="empty-row"><td colspan="7">Không có kỳ nào trong nhóm này.</td></tr>') +
       '</tbody></table></div>';
   }
   function nudgeText(r) {
@@ -379,9 +449,9 @@
     root.innerHTML =
       '<div class="view-head"><div><h2>Đội xe (' + d.cars.length + ')</h2>' +
       '<p class="muted small" style="margin:0">Ảnh đang là ảnh tạm tự sinh. Dán link ảnh thật vào ô “Link ảnh” là website hiện ngay.</p></div>' +
-      '<div class="btn-row"><button class="btn" data-act="new-car">+ Thêm xe</button>' +
-      '<button class="btn ghost" data-act="export-cars">Xuất CSV</button>' +
-      '<button class="btn ghost" data-act="import-cars">Nạp từ Excel</button></div></div>' +
+      '<div class="btn-row"><button class="btn" data-act="new-car">' + ICON.plus + 'Thêm xe</button>' +
+      '<button class="btn ghost" data-act="export-cars">' + ICON.download + 'Xuất CSV</button>' +
+      '<button class="btn ghost" data-act="import-cars">' + ICON.upload + 'Nạp từ Excel</button></div></div>' +
 
       '<div class="toolbar">' +
       '<input id="car-q" placeholder="Tìm biển số / tên xe…" value="' + esc(carQ) + '">' +
@@ -401,20 +471,21 @@
     return '<div class="fleet">' + list.map(function (c) {
       var ct = S.activeContractOfCar(c.id);
       var insp = S.fromToday(c.inspectionDue), ins = S.fromToday(c.insuranceDue);
-      return '<div class="fcard"><img src="' + S.photoOf(c) + '" alt="">' +
-        '<div class="b"><div style="display:flex;justify-content:space-between;gap:6px">' +
-        '<h4>' + esc(c.name) + '</h4>' + carStatusBadge(c) + '</div>' +
-        '<div class="tiny mono muted">' + esc(c.plate) + ' · ' + c.year + ' · ' + c.seats + ' chỗ · ' + c.gearbox + '</div>' +
-        '<div class="kv"><span>Giá tháng</span><b>' + fmtShort(c.pricePerMonth) + '₫</b></div>' +
+      return '<div class="fcard">' +
+        '<div class="ph"><img src="' + S.photoOf(c) + '" alt="" loading="lazy">' +
+        carStatusBadge(c) + '<span class="plate">' + esc(c.plate) + '</span></div>' +
+        '<div class="b"><h4>' + esc(c.name) + '</h4>' +
+        '<div class="tiny muted">' + c.year + ' · ' + c.seats + ' chỗ · ' + (c.gearbox === 'AT' ? 'số tự động' : 'số sàn') + '</div>' +
+        '<div class="kv"><span>Giá tháng</span><b>' + S.fmtMil(c.pricePerMonth) + '</b></div>' +
         '<div class="kv"><span>' + (ct ? 'Khách thuê' : 'Tình trạng') + '</span><b>' + esc(ct ? custLabel(ct.customerId) : c.status === 'maintenance' ? 'Đang ở garage' : 'Chưa có khách') + '</b></div>' +
         (ct ? '<div class="kv"><span>Hết hạn</span><b>' + fmtDate(ct.endDate) + '</b></div>' : '') +
         '<div class="kv"><span>ODO</span><b>' + (c.odo || 0).toLocaleString('vi-VN') + ' km</b></div>' +
         '<div class="kv"><span>Đăng kiểm</span><b style="' + dueStyle(insp) + '">' + fmtDate(c.inspectionDue) + '</b></div>' +
         '<div class="kv"><span>Bảo hiểm</span><b style="' + dueStyle(ins) + '">' + fmtDate(c.insuranceDue) + '</b></div>' +
-        '<div class="btn-row" style="margin-top:4px">' +
-        '<button class="btn ghost sm" data-act="edit-car" data-id="' + c.id + '">Sửa</button>' +
-        (ct ? '<button class="btn ghost sm" data-act="view-contract" data-id="' + ct.id + '">Hợp đồng</button>'
-          : '<button class="btn sm" data-act="new-contract" data-car="' + c.id + '">Cho thuê</button>') +
+        '<div class="btn-row" style="margin-top:6px">' +
+        '<button class="btn ghost sm" data-act="edit-car" data-id="' + c.id + '" style="flex:1">Sửa</button>' +
+        (ct ? '<button class="btn ghost sm" data-act="view-contract" data-id="' + ct.id + '" style="flex:1">Hợp đồng</button>'
+          : '<button class="btn sm" data-act="new-contract" data-car="' + c.id + '" style="flex:1">Cho thuê</button>') +
         '</div></div></div>';
     }).join('') + '</div>';
   }
@@ -494,8 +565,8 @@
     root.innerHTML =
       '<div class="view-head"><div><h2>Hợp đồng thuê tháng</h2>' +
       '<p class="muted small" style="margin:0">Tạo hợp đồng là tự sinh đủ các kỳ thu tiền, khỏi nhập tay từng tháng.</p></div>' +
-      '<div class="btn-row"><button class="btn" data-act="new-contract">+ Hợp đồng mới</button>' +
-      '<button class="btn ghost" data-act="export-contracts">Xuất CSV</button></div></div>' +
+      '<div class="btn-row"><button class="btn" data-act="new-contract">' + ICON.plus + 'Hợp đồng mới</button>' +
+      '<button class="btn ghost" data-act="export-contracts">' + ICON.download + 'Xuất CSV</button></div></div>' +
       '<div class="toolbar"><div class="seg">' +
       [['active', 'Đang hiệu lực'], ['ended', 'Đã kết thúc'], ['all', 'Tất cả']].map(function (a) {
         return '<button data-ctf="' + a[0] + '"' + (ctFilter === a[0] ? ' class="on"' : '') + '>' + a[1] + '</button>';
@@ -519,7 +590,7 @@
           '<td class="right mono">' + fmtShort(paid) + '<div class="tiny muted">/' + fmtShort(c.monthlyPrice * c.months) + '</div></td>' +
           '<td class="right mono">' + (debt ? '<b style="color:var(--danger)">' + fmtShort(debt) + '</b>' : '<span class="muted">0</span>') + '</td>' +
           '<td class="right nowrap"><button class="btn ghost sm" data-act="view-contract" data-id="' + c.id + '">Chi tiết</button></td></tr>';
-      }).join('') : '<tr><td colspan="8" class="center muted" style="padding:28px">Chưa có hợp đồng nào.</td></tr>') +
+      }).join('') : '<tr class="empty-row"><td colspan="8">Chưa có hợp đồng nào.</td></tr>') +
       '</tbody></table></div>';
   }
   function contractDialog(carId) {
@@ -583,9 +654,9 @@
         '<div class="small muted">Cọc ' + fmtVND(c.deposit) + ' · ' + (c.kmLimit || 3000) + ' km/tháng</div></div>' +
         '</div>' +
         '<div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">' +
-        kpi('Giá / tháng', fmtShort(c.monthlyPrice) + '₫', c.months + ' tháng') +
-        kpi('Đã thu', fmtShort(paid) + '₫', 'trên ' + fmtShort(c.monthlyPrice * c.months) + '₫', 'good') +
-        kpi('Còn nợ', fmtShort(debt) + '₫', debt ? 'cần thu ngay' : 'không nợ', debt ? 'alert' : 'good') +
+        kpi('Giá / tháng', S.fmtMil(c.monthlyPrice), c.months + ' tháng') +
+        kpi('Đã thu', S.fmtMil(paid), 'trên ' + fmtShort(c.monthlyPrice * c.months) + '₫', 'good') +
+        kpi('Còn nợ', S.fmtMil(debt), debt ? 'cần thu ngay' : 'không nợ', debt ? 'alert' : 'good') +
         '</div>' +
         '<div class="table-scroll"><table class="tbl" style="min-width:420px"><thead><tr>' +
         '<th>Kỳ</th><th>Hạn</th><th class="right">Tiền</th><th>Tình trạng</th><th></th></tr></thead><tbody>' +
@@ -654,7 +725,7 @@
           '<button class="btn ghost sm" data-act="edit-car" data-id="' + a.carId + '">Cập nhật xe</button> ' +
           (a.kind === 'Bảo dưỡng' ? '<button class="btn sm" data-act="done-service" data-id="' + a.carId + '">Đã bảo dưỡng</button>' : '') +
           '</td></tr>';
-      }).join('') : '<tr><td colspan="5" class="center muted" style="padding:26px">Không có hạn nào trong 60 ngày tới.</td></tr>') +
+      }).join('') : '<tr class="empty-row"><td colspan="5">Không có hạn nào trong 60 ngày tới.</td></tr>') +
       '</tbody></table></div>' +
       '<div class="panel"><header><h3>Hợp đồng hết hạn trong 45 ngày</h3></header>' +
       (ending.length ? '<ul class="list">' + ending.map(function (c) {
@@ -688,7 +759,7 @@
           (l.status !== 'won' ? '<button class="btn sm" data-act="lead-win" data-id="' + l.id + '">Tạo hợp đồng</button> ' : '') +
           (l.status !== 'lost' ? '<button class="btn ghost sm" data-act="lead-status" data-id="' + l.id + '" data-v="lost">Bỏ</button>' : '') +
           '</td></tr>';
-      }).join('') : '<tr><td colspan="6" class="center muted" style="padding:26px">Chưa có yêu cầu nào. Thử gửi form ở trang khách để xem nó chạy.</td></tr>') +
+      }).join('') : '<tr class="empty-row"><td colspan="6">Chưa có yêu cầu nào. Thử gửi form ở trang khách để xem nó chạy.</td></tr>') +
       '</tbody></table></div>';
   }
 
@@ -702,13 +773,13 @@
     root.innerHTML =
       '<div class="view-head"><div><h2>Chi phí đội xe</h2>' +
       '<p class="muted small" style="margin:0">Ghi chi phí theo xe để tính được lãi/lỗ từng chiếc.</p></div>' +
-      '<div class="btn-row"><button class="btn" data-act="new-expense">+ Ghi chi phí</button>' +
-      '<button class="btn ghost" data-act="export-expenses">Xuất CSV</button></div></div>' +
+      '<div class="btn-row"><button class="btn" data-act="new-expense">' + ICON.plus + 'Ghi chi phí</button>' +
+      '<button class="btn ghost" data-act="export-expenses">' + ICON.download + 'Xuất CSV</button></div></div>' +
       '<div class="kpis">' +
-      kpi('Chi tháng này', fmtShort(monthSum) + '₫', ym) +
-      kpi('Tổng đã ghi', fmtShort(list.reduce(function (s, e) { return s + e.amount; }, 0)) + '₫', list.length + ' khoản') +
+      kpi('Chi tháng này', S.fmtMil(monthSum), ym) +
+      kpi('Tổng đã ghi', S.fmtMil(list.reduce(function (s, e) { return s + e.amount; }, 0)), list.length + ' khoản') +
       Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; }).slice(0, 3).map(function (k) {
-        return kpi(k, fmtShort(byCat[k]) + '₫', 'tổng cộng');
+        return kpi(k, S.fmtMil(byCat[k]), 'tổng cộng');
       }).join('') + '</div>' +
       '<div class="card table-scroll"><table class="tbl"><thead><tr>' +
       '<th>Ngày</th><th>Xe</th><th>Loại</th><th class="right">Số tiền</th><th>Ghi chú</th><th></th></tr></thead><tbody>' +
@@ -719,7 +790,7 @@
           '<td class="right mono">' + fmtVND(e.amount) + '</td>' +
           '<td class="small muted">' + esc(e.note || '') + '</td>' +
           '<td class="right"><button class="btn ghost sm" data-act="del-expense" data-id="' + e.id + '">Xoá</button></td></tr>';
-      }).join('') : '<tr><td colspan="6" class="center muted" style="padding:26px">Chưa ghi chi phí nào.</td></tr>') +
+      }).join('') : '<tr class="empty-row"><td colspan="6">Chưa ghi chi phí nào.</td></tr>') +
       '</tbody></table></div>';
   }
   function expenseDialog() {
@@ -758,10 +829,10 @@
         return '<button data-pm="' + m + '"' + (profitMonths === m ? ' class="on"' : '') + '>' + m + ' tháng</button>';
       }).join('') + '</div></div>' +
       '<div class="kpis">' +
-      kpi('Đã thu', fmtShort(tot.income) + '₫', profitMonths + ' tháng', 'good') +
-      kpi('Chi phí', fmtShort(tot.expense) + '₫', 'sửa chữa, bảo dưỡng…') +
-      kpi('Trả góp', fmtShort(tot.loan) + '₫', 'ngân hàng') +
-      kpi('Lợi nhuận', fmtShort(tot.profit) + '₫', tot.profit >= 0 ? 'đang có lãi' : 'đang lỗ', tot.profit >= 0 ? 'good' : 'alert') +
+      kpi('Đã thu', S.fmtMil(tot.income), profitMonths + ' tháng', 'good') +
+      kpi('Chi phí', S.fmtMil(tot.expense), 'sửa chữa, bảo dưỡng…') +
+      kpi('Trả góp', S.fmtMil(tot.loan), 'ngân hàng') +
+      kpi('Lợi nhuận', S.fmtMil(tot.profit), tot.profit >= 0 ? 'đang có lãi' : 'đang lỗ', tot.profit >= 0 ? 'good' : 'alert') +
       '</div>' +
       '<div class="card table-scroll"><table class="tbl"><thead><tr>' +
       '<th>Xe</th><th class="right">Thu</th><th class="right">Chi</th><th class="right">Trả góp</th>' +
@@ -790,7 +861,7 @@
     root.innerHTML =
       '<div class="view-head"><div><h2>Khách hàng (' + d.customers.length + ')</h2>' +
       '<p class="muted small" style="margin:0">Lịch sử thuê và công nợ của từng khách.</p></div>' +
-      '<div class="btn-row"><button class="btn" data-act="new-customer">+ Thêm khách</button></div></div>' +
+      '<div class="btn-row"><button class="btn" data-act="new-customer">' + ICON.plus + 'Thêm khách</button></div></div>' +
       '<div class="card table-scroll"><table class="tbl"><thead><tr>' +
       '<th>Khách</th><th>Điện thoại</th><th>CCCD</th><th>Địa chỉ</th><th class="right">Số HĐ</th>' +
       '<th class="right">Đang nợ</th><th></th></tr></thead><tbody>' +
@@ -1004,6 +1075,10 @@
   });
 
   /* ====================== khởi động ====================== */
+  $$('[data-shop]').forEach(function (el) {
+    var k = el.getAttribute('data-shop'), v = S.load().shop[k];
+    if (v != null) el.textContent = k === 'name' ? String(v).split('—')[0].trim() : v;
+  });
   $('#today-badge').textContent = 'Hôm nay ' + fmtDate(S.toISO(S.today()));
   var saved = null;
   try { saved = JSON.parse(localStorage.getItem('thuexe.me') || 'null'); } catch (e) { }

@@ -46,6 +46,13 @@
     if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1).replace('.', ',') + ' tr';
     return Math.round(n).toLocaleString('vi-VN');
   }
+  /** 13200000 -> "13,2 triệu" — cách người mình hay đọc giá thuê. */
+  function fmtMil(n) {
+    if (n == null || isNaN(n)) return '—';
+    if (Math.abs(n) < 1e6) return Math.round(n).toLocaleString('vi-VN') + '₫';
+    var v = n / 1e6;
+    return (Math.round(v * 10) / 10).toString().replace('.', ',') + ' triệu';
+  }
   function fmtDate(iso) {
     var d = parseDate(iso);
     return d ? pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() : '—';
@@ -60,29 +67,74 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  /* ---------- ảnh tạm: SVG tự sinh, không cần mạng ---------- */
+  /* ---------- ảnh tạm: SVG tự sinh, không cần mạng ----------
+     Vẽ dáng xe theo số chỗ (sedan / MPV) trên nền chuyển màu, kèm tên xe và
+     biển số. Khi có ảnh thật chỉ cần điền car.photo là dùng ảnh thật. */
   var PALETTE = [
-    ['#0f5ef7', '#00c2ff'], ['#7b2ff7', '#f107a3'], ['#0f8a5f', '#93e9be'],
-    ['#ff7a18', '#ffd166'], ['#16181d', '#4b5563'], ['#c8362a', '#ff8f6b'],
-    ['#0369a1', '#67e8f9'], ['#4d7c0f', '#d9f99d']
+    ['#101a3a', '#2b5cff'], ['#3b0d4e', '#c026a8'], ['#04342c', '#12a37a'],
+    ['#4a1b06', '#ff8a2b'], ['#111726', '#59647f'], ['#4a0d1c', '#e0455f'],
+    ['#052b45', '#22a7d0'], ['#26310a', '#8bbf27']
   ];
+  /* Dáng xe vẽ trong khung 300x120, xe hướng sang phải.
+     thân = vỏ xe, kinh = mảng kính (tô sẫm để nổi trên vỏ trắng). */
+  var BODY = {
+    sedan: {
+      than: 'M6,86 L6,58 Q6,48 17,45 L64,39 L92,21 Q99,17 109,17 L176,17 Q189,17 197,24 L225,49 ' +
+        'L274,53 Q292,56 293,70 L293,82 Q293,86 286,86 L261,86 A29,29 0 0 0 203,86 L97,86 ' +
+        'A29,29 0 0 0 39,86 Z',
+      kinh: 'M99,43 L119,24 L140,24 L140,43 Z M147,24 L175,24 Q184,24 189,28 L209,43 L147,43 Z',
+      nan: 'M143,24 L143,86 M97,47 L262,47',
+      den: '<rect x="278" y="60" width="14" height="9" rx="4" fill="#ffe9a8" opacity=".95"/>' +
+        '<rect x="7" y="58" width="12" height="9" rx="4" fill="#ff8a8a" opacity=".9"/>'
+    },
+    mpv: {
+      than: 'M6,88 L6,50 Q6,38 19,34 L63,19 Q73,11 89,11 L203,11 Q219,11 229,21 L253,47 ' +
+        'L276,53 Q293,57 293,71 L293,84 Q293,88 286,88 L263,88 A29,29 0 0 0 205,88 L99,88 ' +
+        'A29,29 0 0 0 41,88 Z',
+      kinh: 'M41,42 L66,24 Q72,19 82,19 L112,19 L112,42 Z M119,19 L165,19 L165,42 L119,42 Z ' +
+        'M172,19 L200,19 Q211,19 217,26 L231,42 L172,42 Z',
+      nan: 'M115,19 L115,88 M168,19 L168,88 M41,47 L264,47',
+      den: '<rect x="279" y="59" width="13" height="10" rx="4" fill="#ffe9a8" opacity=".95"/>' +
+        '<rect x="7" y="54" width="11" height="13" rx="4" fill="#ff8a8a" opacity=".9"/>'
+    }
+  };
+  function wheel(x) {
+    return '<circle cx="' + x + '" cy="88" r="25" fill="#0c101a"/>' +
+      '<circle cx="' + x + '" cy="88" r="13" fill="#dfe4ee"/>' +
+      '<circle cx="' + x + '" cy="88" r="4.5" fill="#8a93a6"/>';
+  }
   function placeholder(car) {
-    var seed = 0, s = (car.plate || car.name || 'xe');
-    for (var i = 0; i < s.length; i++) seed = (seed * 31 + s.charCodeAt(i)) % 9973;
+    var seed = 0, key = (car.plate || '') + (car.name || 'xe');
+    for (var i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 9973;
     var c = PALETTE[seed % PALETTE.length];
+    var f = (car.seats >= 7 ? BODY.mpv : BODY.sedan);
     var svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">' +
-      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/>' +
-      '</linearGradient></defs>' +
-      '<rect width="640" height="400" fill="url(#g)"/>' +
-      '<g fill="rgba(255,255,255,.92)" transform="translate(120,150) scale(1.35)">' +
-      '<path d="M8 60c-4 0-8-3-8-8V38c0-5 3-9 7-11l12-4 10-16c2-4 6-6 10-6h60c5 0 9 2 11 6l10 16 12 4c4 2 7 6 7 11v14c0 5-4 8-8 8h-9a14 14 0 0 1-28 0H45a14 14 0 0 1-28 0H8z"/>' +
-      '<circle cx="31" cy="58" r="8" fill="' + c[0] + '"/><circle cx="117" cy="58" r="8" fill="' + c[0] + '"/>' +
-      '<path d="M34 12h-2l-8 14h36V12H34zm40 0v14h36l-8-14H74z" fill="rgba(255,255,255,.55)"/>' +
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">' +
+      '<defs>' +
+      '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient>' +
+      '<radialGradient id="glow" cx=".74" cy=".16" r=".7">' +
+      '<stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#ffffff"/><stop offset=".62" stop-color="#f2f4f9"/><stop offset="1" stop-color="#ccd2e0"/></linearGradient>' +
+      '<radialGradient id="shadow" cx=".5" cy=".5" r=".5">' +
+      '<stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>' +
+      '<pattern id="lines" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">' +
+      '<line x1="0" y1="0" x2="0" y2="28" stroke="#fff" stroke-opacity=".045" stroke-width="11"/></pattern>' +
+      '</defs>' +
+      '<rect width="640" height="400" fill="url(#bg)"/>' +
+      '<rect width="640" height="400" fill="url(#lines)"/>' +
+      '<rect width="640" height="400" fill="url(#glow)"/>' +
+      '<ellipse cx="322" cy="250" rx="186" ry="15" fill="url(#shadow)"/>' +
+      '<g transform="translate(132,109) scale(1.25)">' +
+      '<path d="' + f.than + '" fill="url(#paint)"/>' +
+      '<path d="' + f.kinh + '" fill="#0c101a" opacity=".42"/>' +
+      '<path d="' + f.nan + '" stroke="#0c101a" stroke-opacity=".16" stroke-width="2" fill="none"/>' +
+      f.den + wheel(68) + wheel(232) +
       '</g>' +
-      '<text x="32" y="344" font-family="sans-serif" font-size="34" font-weight="700" fill="#fff">' + esc(car.name || '') + '</text>' +
-      '<text x="32" y="378" font-family="monospace" font-size="22" fill="rgba(255,255,255,.85)">' + esc(car.plate || '') + '</text>' +
+      '<rect width="640" height="400" fill="url(#fade)"/>' +
       '</svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
@@ -416,7 +468,7 @@
     revenueOfMonth: revenueOfMonth, expenseOfMonth: expenseOfMonth, carProfit: carProfit,
     createContract: createContract, endContract: endContract,
     markPaid: markPaid, unmarkPaid: unmarkPaid, addLead: addLead,
-    fmtVND: fmtVND, fmtShort: fmtShort, fmtDate: fmtDate, fmtMonth: fmtMonth, esc: esc,
+    fmtVND: fmtVND, fmtShort: fmtShort, fmtMil: fmtMil, fmtDate: fmtDate, fmtMonth: fmtMonth, esc: esc,
     toISO: toISO, today: today, parseDate: parseDate, addDays: addDays, addMonths: addMonths,
     fromToday: fromToday, dayDiff: dayDiff, pad: pad,
     photoOf: photoOf, placeholder: placeholder

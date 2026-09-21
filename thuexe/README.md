@@ -19,6 +19,13 @@ cd thuexe && python3 -m http.server 8080   # rồi mở http://localhost:8080
 
 Vào trang quản lý chọn vai trò **Chủ xe** hoặc **Nhân viên** để thấy khác biệt quyền.
 
+## Giao diện
+
+- Trang khách: hero nền tối, thẻ kính tính chi phí, thẻ xe có hiệu ứng hover, bảng giá làm nổi cột 12 tháng, FAQ dạng gập, nút gọi/Zalo nổi.
+- Trang quản lý: sidebar cố định (điện thoại thì trượt ra), thẻ số liệu có icon, **nút đổi nền sáng/tối** ở góc dưới sidebar.
+- Ảnh xe tạm: SVG tự sinh, vẽ đúng dáng sedan 5 chỗ hoặc MPV 7 chỗ, mỗi biển số ra một màu riêng. Không cần mạng, không cần file ảnh.
+- Toàn bộ màu sắc nằm trong biến CSS ở `assets/css/style.css` — đổi màu thương hiệu chỉ sửa một chỗ.
+
 ## Đã có gì
 
 **Website khách**
@@ -43,7 +50,7 @@ Vào trang quản lý chọn vai trò **Chủ xe** hoặc **Nhân viên** để 
 
 - Dữ liệu lưu trong **localStorage của trình duyệt** — chỉ nằm trên máy đang mở, không chia sẻ giữa điện thoại và máy tính, xoá lịch sử trình duyệt là mất.
 - Đăng nhập chỉ là chọn vai trò, **chưa có mật khẩu và chưa bảo mật thật**.
-- Ảnh xe là ảnh tạm tự sinh (SVG). Dán link ảnh thật vào ô "Link ảnh" của từng xe là website hiện ngay.
+- Ảnh xe là ảnh minh hoạ tự sinh (SVG). Dán link ảnh thật vào ô "Link ảnh" của từng xe là website hiện ngay.
 - Nhắc hạn chỉ hiện trong hệ thống, **chưa tự gửi Zalo/SMS**.
 
 ## Bước tiếp theo khi chốt làm thật
