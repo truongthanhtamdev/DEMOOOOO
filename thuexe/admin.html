@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý đội xe | Tâm Auto</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body class="admin">
+
+<!-- ===== cổng đăng nhập (demo: chỉ để xem phân quyền, chưa có bảo mật thật) ===== -->
+<div id="gate">
+  <div class="box">
+    <h2 style="margin-bottom:4px">Quản lý đội xe</h2>
+    <p class="small muted">Bản demo — chọn vai trò để xem quyền hạn khác nhau. Khi làm thật sẽ có email + mật khẩu.</p>
+    <label class="f"><span>Đăng nhập với vai trò</span>
+      <select id="gate-role">
+        <option value="owner">Chủ xe (thấy toàn bộ, gồm lãi/lỗ)</option>
+        <option value="staff">Nhân viên (không thấy lãi/lỗ, không xoá xe)</option>
+      </select>
+    </label>
+    <label class="f"><span>Tên hiển thị</span><input id="gate-name" value="Anh Tâm"></label>
+    <button class="btn" id="gate-in" style="width:100%">Vào hệ thống</button>
+  </div>
+</div>
+
+<header class="topbar">
+  <a class="logo" href="index.html"><span class="mark">🚗</span><span>Quản lý đội xe</span></a>
+  <span class="spacer"></span>
+  <span class="badge info" id="today-badge"></span>
+  <div class="who">
+    <span class="av" id="me-av">T</span>
+    <div>
+      <b id="me-name">—</b>
+      <div class="tiny muted" id="me-role">—</div>
+    </div>
+  </div>
+  <button class="btn ghost sm" id="btn-logout">Đổi vai trò</button>
+</header>
+
+<nav class="tabs" id="tabs"></nav>
+<main class="view" id="view"></main>
+
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

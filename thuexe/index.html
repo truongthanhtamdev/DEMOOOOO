@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thuê xe tự lái theo tháng | Tâm Auto</title>
+<meta name="description" content="Cho thuê xe tự lái dài hạn theo tháng tại TP.HCM. 20 xe từ 8,5 triệu/tháng, thủ tục 30 phút, bảo dưỡng và bảo hiểm chủ xe chịu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top"><span class="mark">🚗</span><span data-shop="name">Tâm Auto</span></a>
+    <nav class="nav-links">
+      <a href="#xe">Danh sách xe</a>
+      <a href="#giá">Bảng giá</a>
+      <a href="#quy-trình">Quy trình</a>
+      <a href="#giấy-tờ">Thủ tục</a>
+      <a href="#faq">Hỏi đáp</a>
+    </nav>
+    <a class="btn" href="#form">Gửi yêu cầu thuê</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">🔑 Thuê tự lái theo tháng · TP.HCM</span>
+        <h1>Xe riêng để đi làm,<br>chỉ từ <span style="color:var(--brand-dark)" data-min-price>8,5 triệu</span>/tháng</h1>
+        <p class="lead">
+          Không cần bỏ ra vài trăm triệu mua xe. Anh/chị thuê theo tháng, xe giao tận nơi,
+          <b>bảo dưỡng – bảo hiểm – đăng kiểm bên em chịu</b>. Hết hạn muốn đổi xe khác cũng được.
+        </p>
+        <div class="btn-row">
+          <a class="btn" href="#form">Gửi yêu cầu — em gọi lại trong 15 phút</a>
+          <a class="btn ghost" href="#xe">Xem xe đang trống</a>
+        </div>
+        <div class="trust">
+          <div><b data-stat="fleet">20</b><span>xe trong đội</span></div>
+          <div><b data-stat="available">5</b><span>xe đang trống</span></div>
+          <div><b>30 phút</b><span>xong thủ tục</span></div>
+          <div><b>0₫</b><span>phí bảo dưỡng</span></div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <h3 style="margin-bottom:14px">Tính nhanh chi phí thuê</h3>
+        <div class="form-grid">
+          <label class="f"><span>Chọn xe</span><select id="calc-car"></select></label>
+          <label class="f"><span>Thời hạn thuê</span>
+            <select id="calc-months">
+              <option value="1">1 tháng</option>
+              <option value="3">3 tháng (−5%)</option>
+              <option value="6" selected>6 tháng (−10%)</option>
+              <option value="12">12 tháng (−15%)</option>
+            </select>
+          </label>
+        </div>
+        <div id="calc-out" class="card card-pad" style="background:var(--surface-2);border-style:dashed"></div>
+        <p class="tiny muted" style="margin:10px 0 0">
+          Giá tham khảo, chưa gồm nhiên liệu và phí cầu đường. Giá chốt cuối theo hợp đồng.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DANH SÁCH XE ================= -->
+  <section class="sec wrap" id="xe">
+    <div class="sec-head">
+      <h2>Xe đang có sẵn</h2>
+      <p>Ảnh trong bản demo là ảnh tạm — khi anh gửi ảnh thật, mỗi xe chỉ cần dán link ảnh trong trang quản lý là hiện ngay.</p>
+    </div>
+
+    <div class="filters">
+      <label class="f"><span>Số chỗ</span>
+        <select id="f-seats"><option value="">Tất cả</option><option value="5">5 chỗ</option><option value="7">7 chỗ</option></select>
+      </label>
+      <label class="f"><span>Hộp số</span>
+        <select id="f-gear"><option value="">Tất cả</option><option value="AT">Tự động</option><option value="MT">Số sàn</option></select>
+      </label>
+      <label class="f"><span>Giá tối đa / tháng</span>
+        <select id="f-price">
+          <option value="">Không giới hạn</option>
+          <option value="10000000">Dưới 10 triệu</option>
+          <option value="14000000">Dưới 14 triệu</option>
+          <option value="18000000">Dưới 18 triệu</option>
+        </select>
+      </label>
+      <label class="f"><span>Tìm theo tên xe</span><input id="f-q" placeholder="Vios, Xpander…"></label>
+      <label class="f" style="flex:0 0 auto;min-width:0">
+        <span>&nbsp;</span>
+        <label class="small" style="display:flex;gap:7px;align-items:center;font-weight:600;color:var(--ink);white-space:nowrap">
+          <input type="checkbox" id="f-all" style="width:auto"> Xem cả xe đang có khách
+        </label>
+      </label>
+    </div>
+
+    <div class="cars" id="car-list"></div>
+    <p id="car-empty" class="muted center hide" style="padding:28px">Không có xe nào khớp bộ lọc. Anh/chị thử bỏ bớt điều kiện nhé.</p>
+  </section>
+
+  <!-- ================= BẢNG GIÁ ================= -->
+  <section class="sec wrap" id="giá">
+    <div class="sec-head">
+      <h2>Bảng giá thuê tháng</h2>
+      <p>Thuê càng dài giá càng giảm. Đã bao gồm bảo dưỡng định kỳ, bảo hiểm vật chất và đăng kiểm.</p>
+    </div>
+    <div class="card table-scroll">
+      <table class="tbl" id="price-table">
+        <thead><tr>
+          <th>Xe</th><th>Chỗ</th><th>Hộp số</th>
+          <th class="right">1 tháng</th><th class="right">3 tháng</th><th class="right">6 tháng</th><th class="right">12 tháng</th>
+          <th class="right">Cọc</th><th>Tình trạng</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:12px">
+      Giới hạn 3.000 km/tháng, vượt tính 4.000₫/km (có thể thương lượng nếu chạy nhiều).
+    </p>
+  </section>
+
+  <!-- ================= QUY TRÌNH ================= -->
+  <section class="sec wrap" id="quy-trình">
+    <div class="sec-head"><h2>Thuê xe trong 4 bước</h2></div>
+    <div class="steps">
+      <div class="step"><h3>Chọn xe & gửi yêu cầu</h3><p class="small muted">Điền form hoặc gọi Zalo. Em báo xe còn trống và giá chốt.</p></div>
+      <div class="step"><h3>Xem xe & ký hợp đồng</h3><p class="small muted">Xem xe trực tiếp, kiểm tra giấy tờ, ký hợp đồng thuê tháng.</p></div>
+      <div class="step"><h3>Đặt cọc & nhận xe</h3><p class="small muted">Cọc 1–2 tháng tiền thuê. Giao xe tại nhà trong nội thành.</p></div>
+      <div class="step"><h3>Đóng tiền mỗi tháng</h3><p class="small muted">Em nhắc trước 3 ngày. Bảo dưỡng tới hạn em chủ động hẹn lịch.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= THỦ TỤC + VÌ SAO ================= -->
+  <section class="sec wrap" id="giấy-tờ">
+    <div class="two">
+      <div class="card card-pad">
+        <h3>Giấy tờ cần chuẩn bị</h3>
+        <ul class="check">
+          <li>CCCD gắn chip (bản gốc để đối chiếu)</li>
+          <li>Giấy phép lái xe B1/B2 còn hạn</li>
+          <li>Hộ khẩu / xác nhận cư trú hoặc hợp đồng thuê nhà</li>
+          <li>Chọn 1 trong 2: đặt cọc tiền, hoặc cọc xe máy có giấy tờ chính chủ</li>
+        </ul>
+        <p class="small muted" style="margin-top:12px">Khách là người đi làm công ty có hợp đồng lao động được ưu tiên giảm cọc.</p>
+      </div>
+      <div class="card card-pad">
+        <h3>Vì sao thuê tháng thay vì mua xe</h3>
+        <ul class="check">
+          <li>Không mất vài trăm triệu vốn, không vay ngân hàng</li>
+          <li>Không lo xe mất giá khi bán lại</li>
+          <li>Bảo dưỡng, bảo hiểm, đăng kiểm chủ xe lo hết</li>
+          <li>Xe hư có xe khác thay trong 24 giờ</li>
+          <li>Đổi xe khác khi hết hợp đồng, ngưng thuê là xong</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FORM ================= -->
+  <section class="sec wrap" id="form">
+    <div class="two" style="align-items:start">
+      <div>
+        <div class="sec-head">
+          <h2>Gửi yêu cầu thuê xe</h2>
+          <p>Điền 30 giây, em gọi lại xác nhận xe còn trống và báo giá chốt. Không thanh toán gì trên web.</p>
+        </div>
+        <div class="cta">
+          <h2 style="font-size:22px">Cần gấp trong hôm nay?</h2>
+          <p style="opacity:.92">Gọi trực tiếp nhanh nhất, em check xe trống liền.</p>
+          <div class="btn-row">
+            <a class="btn" data-shop="tel">Gọi ngay</a>
+            <a class="btn ghost" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.5)" data-shop="zalo-link">Chat Zalo</a>
+          </div>
+        </div>
+      </div>
+
+      <form class="card card-pad" id="lead-form" novalidate>
+        <div class="form-grid">
+          <label class="f"><span>Họ tên *</span><input name="name" required placeholder="Nguyễn Văn A"></label>
+          <label class="f"><span>Số điện thoại *</span><input name="phone" required inputmode="tel" placeholder="09xx xxx xxx"></label>
+          <label class="f"><span>Xe muốn thuê</span><select name="carId" id="lead-car"></select></label>
+          <label class="f"><span>Thuê bao lâu</span>
+            <select name="months">
+              <option value="1">1 tháng</option><option value="3">3 tháng</option>
+              <option value="6" selected>6 tháng</option><option value="12">12 tháng</option>
+            </select>
+          </label>
+          <label class="f"><span>Ngày muốn nhận xe</span><input type="date" name="startDate"></label>
+          <label class="f"><span>Mục đích sử dụng</span>
+            <select name="purpose">
+              <option>Đi làm / đi lại hàng ngày</option>
+              <option>Gia đình, đưa đón con</option>
+              <option>Chạy dịch vụ (Grab, Xanh SM…)</option>
+              <option>Khác</option>
+            </select>
+          </label>
+        </div>
+        <label class="f"><span>Ghi chú thêm</span><textarea name="note" placeholder="Ví dụ: cần xe 7 chỗ số tự động, giao xe ở Gò Vấp…"></textarea></label>
+        <button class="btn" type="submit" style="width:100%">Gửi yêu cầu</button>
+        <p class="tiny muted center" style="margin:10px 0 0">Thông tin chỉ dùng để liên hệ cho thuê xe.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="sec wrap" id="faq">
+    <div class="sec-head"><h2>Câu hỏi thường gặp</h2></div>
+    <div class="card card-pad">
+      <details class="faq" open><summary>Cọc bao nhiêu và khi nào được trả lại?</summary>
+        <p>Cọc bằng 1–2 tháng tiền thuê, tuỳ dòng xe (ghi rõ trong bảng giá). Trả xe đúng hạn, xe không hư hỏng ngoài hao mòn thường thì hoàn cọc trong 3 ngày.</p></details>
+      <details class="faq"><summary>Chạy quá số km giới hạn thì sao?</summary>
+        <p>Định mức 3.000 km/tháng, vượt tính 4.000₫/km và chốt vào kỳ đóng tiền kế tiếp. Nếu anh/chị chạy nhiều, nói trước để em báo giá gói km cao.</p></details>
+      <details class="faq"><summary>Xe hư giữa hợp đồng thì ai chịu?</summary>
+        <p>Hỏng do hao mòn, máy móc, điện: bên em chịu và đổi xe thay trong 24 giờ. Hỏng do va chạm, sai lỗi người thuê: áp dụng mức miễn thường bảo hiểm ghi trong hợp đồng.</p></details>
+      <details class="faq"><summary>Có cho thuê chạy Grab / dịch vụ không?</summary>
+        <p>Có, nhưng giá và định mức km khác gói tự lái thường vì xe xuống nhanh hơn. Anh/chị ghi rõ mục đích trong form để em báo đúng giá.</p></details>
+      <details class="faq"><summary>Muốn trả xe sớm hơn hợp đồng?</summary>
+        <p>Báo trước 15 ngày. Phần đã đóng của tháng đang dùng không hoàn, cọc trả lại bình thường nếu xe nguyên trạng.</p></details>
+      <details class="faq"><summary>Có nhận khách ở tỉnh không?</summary>
+        <p>Có, với hợp đồng từ 6 tháng. Cần thêm xác nhận cư trú hoặc người bảo lãnh ở TP.HCM.</p></details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <b data-shop="name"></b><br>
+      <span data-shop="address"></span><br>
+      Hotline: <a data-shop="tel"><span data-shop="phone"></span></a>
+    </div>
+    <div class="small">
+      <a href="admin.html">Trang quản lý nội bộ →</a><br>
+      <span class="muted">Bản demo — dữ liệu lưu trên máy anh/chị, chưa nối cơ sở dữ liệu thật.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="fab">
+  <a class="zalo" data-shop="zalo-link" title="Chat Zalo">Zalo</a>
+  <a data-shop="tel" title="Gọi ngay">Gọi</a>
+</div>
+<div id="toast"></div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>
