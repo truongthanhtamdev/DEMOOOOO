@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chụp Ảnh &amp; Quay Dựng Video Bằng Điện Thoại — Em Tâm Làm Ads</title>
+<meta name="description" content="Khu vực học viên khoá học Chụp Ảnh & Quay Dựng Video Bằng Điện Thoại của Em Tâm Làm Ads: 7 phần, 44 bài giảng, xem lại trọn đời.">
+<meta name="theme-color" content="#121319">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://emtamlamads.com/khoahocvideo">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Em Tâm Làm Ads">
+<meta property="og:title" content="Chụp Ảnh & Quay Dựng Video Bằng Điện Thoại">
+<meta property="og:description" content="7 phần · 44 bài giảng · Học quay chụp & dựng video chỉ với chiếc điện thoại.">
+<meta property="og:url" content="https://emtamlamads.com/khoahocvideo">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121319'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ff5b54'/%3E%3Cpath d='M6 11V6h5M21 6h5v5M26 21v5h-5M11 26H6v-5' stroke='%23f4c430' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     ink     — nền chính, màu "thân máy ảnh"
+     surface — nền thẻ/khối, "vỏ nhựa mờ"
+     line    — viền mảnh, "vân lưới tản nhiệt"
+     gold    — điểm nhấn chính, màu khung lấy nét AE/AF
+     red     — điểm nhấn phụ, đèn "REC" đang quay
+     green   — trạng thái đã học / hoàn thành
+     paper   — chữ chính, màu "kính ngắm"
+     ============================================================ */
+  :root{
+    --ink:#121319;
+    --surface:#1a1c25;
+    --surface-2:#21232e;
+    --surface-3:#282b37;
+    --line:#2b2e3a;
+    --line-strong:#3a3e4d;
+    --gold:#f4c430;
+    --gold-soft:rgba(244,196,48,0.10);
+    --red:#ff5b54;
+    --green:#6fcf97;
+    --green-soft:rgba(111,207,151,0.10);
+    --paper:#f3f1ea;
+    --muted:#9a9dac;
+    --display:'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --radius:14px;
+    --radius-sm:10px;
+    --topbar-h:64px;
+  }
+
+  *, *::before, *::after{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 500px at 15% -10%, rgba(244,196,48,0.06), transparent 60%),
+      radial-gradient(900px 400px at 100% 0%, rgba(255,91,84,0.05), transparent 60%),
+      var(--ink);
+    color:var(--paper);
+    font-family:var(--display);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; }
+  button, input{ font:inherit; color:inherit; }
+  button{ cursor:pointer; }
+  :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; border-radius:6px; }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  .skip{ position:absolute; left:16px; top:-48px; z-index:100; background:var(--gold); color:var(--ink); padding:8px 14px; border-radius:8px; font-weight:700; text-decoration:none; }
+  .skip:focus{ top:12px; }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    height:var(--topbar-h);
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:0 24px;
+    background:rgba(18,19,25,0.86);
+    backdrop-filter:saturate(140%) blur(12px);
+    -webkit-backdrop-filter:saturate(140%) blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; min-width:0; }
+  .brand .logo{
+    position:relative; flex:none;
+    width:34px; height:34px; border-radius:9px;
+    background:var(--surface-2); border:1px solid var(--line-strong);
+    display:grid; place-items:center;
+  }
+  .brand .logo::after{ content:""; width:10px; height:10px; border-radius:50%; background:var(--red); box-shadow:0 0 0 4px rgba(255,91,84,0.18); }
+  .brand .name{ font-weight:800; letter-spacing:0.02em; font-size:15px; line-height:1.2; white-space:nowrap; }
+  .brand .name small{ display:block; font-family:var(--mono); font-size:11px; color:var(--muted); font-weight:400; letter-spacing:0.06em; }
+
+  .top-actions{ display:flex; align-items:center; gap:10px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--mono); font-size:12px; white-space:nowrap;
+    padding:7px 12px; border-radius:999px;
+    border:1px solid rgba(111,207,151,0.35); background:var(--green-soft); color:var(--green);
+  }
+  .pill .ring{ width:16px; height:16px; flex:none; }
+  .btn-ghost{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap;
+    padding:8px 14px; border-radius:999px;
+    border:1px solid var(--line-strong); background:transparent; color:var(--paper);
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .btn-ghost:hover{ border-color:var(--gold); color:var(--gold); }
+
+  /* ---------- layout ---------- */
+  .layout{
+    max-width:1320px; margin:0 auto;
+    padding:28px 24px 64px;
+    display:grid; gap:28px;
+    grid-template-columns:minmax(0,1fr) 380px;
+    align-items:start;
+  }
+
+  /* ---------- player ---------- */
+  .stage{ min-width:0; scroll-margin-top:calc(var(--topbar-h) + 12px); }
+  .player-frame{
+    position:relative;
+    background:#000;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    overflow:hidden;
+    aspect-ratio:16/9;
+    box-shadow:0 24px 60px -24px rgba(0,0,0,0.7);
+  }
+  .player-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+  .chrome-top{
+    position:absolute; top:0; left:0; right:0; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 40px;
+    background:linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+    pointer-events:none;
+    font-family:var(--mono); font-size:11px; color:var(--paper); letter-spacing:.04em;
+    transition:opacity .3s ease;
+  }
+  .player-frame:hover .chrome-top{ opacity:0; }
+  .rec{ display:flex; align-items:center; gap:6px; color:var(--red); }
+  .rec .dot{ width:7px; height:7px; border-radius:50%; background:var(--red); animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .corner{ position:absolute; z-index:2; width:18px; height:18px; border:2px solid var(--gold); opacity:.8; pointer-events:none; }
+  .corner.tl{ top:10px; left:10px; border-right:0; border-bottom:0; }
+  .corner.tr{ top:10px; right:10px; border-left:0; border-bottom:0; }
+  .corner.bl{ bottom:10px; left:10px; border-right:0; border-top:0; }
+  .corner.br{ bottom:10px; right:10px; border-left:0; border-top:0; }
+
+  .lesson-head{ margin-top:20px; display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .lesson-head .info{ min-width:0; flex:1 1 360px; }
+  .meta{
+    font-family:var(--mono); font-size:12px; color:var(--gold);
+    letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;
+  }
+  .lesson-head h1{ font-size:clamp(22px,2.6vw,30px); margin:0; font-weight:800; line-height:1.25; text-wrap:balance; }
+  .part-name{ margin:6px 0 0; color:var(--muted); font-size:14px; }
+
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    min-height:42px; padding:0 16px; border-radius:var(--radius-sm);
+    border:1px solid var(--line-strong); background:var(--surface-2);
+    font-size:14px; font-weight:600; text-decoration:none;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease;
+  }
+  .btn:hover:not(:disabled){ border-color:var(--gold); color:var(--gold); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--ink); }
+  .btn.primary:hover:not(:disabled){ background:#ffd34d; color:var(--ink); }
+  .btn.done{ background:var(--green-soft); border-color:rgba(111,207,151,0.45); color:var(--green); }
+  .btn svg{ width:16px; height:16px; flex:none; }
+
+  /* ---------- stats ---------- */
+  .stats{
+    margin-top:28px;
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+  }
+  .stat{ background:var(--surface); padding:16px 18px; }
+  .stat .n{ font-family:var(--mono); font-size:22px; color:var(--gold); font-weight:500; line-height:1.2; }
+  .stat .l{ font-size:12.5px; color:var(--muted); margin-top:4px; }
+
+  .support{
+    margin-top:20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    padding:18px 20px; border-radius:var(--radius);
+    border:1px dashed var(--line-strong); background:var(--surface);
+  }
+  .support p{ margin:0; font-size:14px; color:var(--muted); }
+  .support strong{ color:var(--paper); display:block; font-size:15px; margin-bottom:2px; }
+  .support .links{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ---------- playlist ---------- */
+  .playlist{
+    position:sticky; top:calc(var(--topbar-h) + 20px);
+    max-height:calc(100vh - var(--topbar-h) - 40px);
+    display:flex; flex-direction:column;
+    background:var(--surface);
+    border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .pl-head{ padding:18px 18px 14px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+  .pl-head h2{ margin:0; font-size:16px; font-weight:800; }
+  .progress-row{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .progress-row b{ color:var(--green); font-weight:500; }
+  .bar{ margin-top:8px; height:6px; border-radius:999px; background:var(--line); overflow:hidden; }
+  .bar > span{ display:block; height:100%; width:0; background:linear-gradient(90deg, var(--green), var(--gold)); border-radius:inherit; transition:width .4s ease; }
+  .search{ position:relative; margin-top:14px; }
+  .search svg{ position:absolute; left:12px; top:50%; width:16px; height:16px; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+  .search input{
+    width:100%; height:40px; padding:0 12px 0 36px;
+    border-radius:var(--radius-sm); border:1px solid var(--line-strong);
+    background:var(--ink); font-size:14px;
+  }
+  .search input::placeholder{ color:var(--muted); }
+  .search input:focus{ outline:none; border-color:var(--gold); }
+
+  .pl-body{ overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+  .pl-empty{ padding:24px 18px; color:var(--muted); font-size:14px; text-align:center; }
+
+  .part{ border-bottom:1px solid var(--line); }
+  .part:last-child{ border-bottom:0; }
+  .part-head{
+    width:100%; display:flex; align-items:center; gap:12px;
+    padding:14px 18px; border:0; background:transparent; text-align:left;
+    transition:background-color .15s ease;
+  }
+  .part-head:hover{ background:var(--surface-2); }
+  .part-head .num{
+    flex:none; width:34px; height:34px; border-radius:9px;
+    display:grid; place-items:center;
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    background:var(--ink); border:1px solid var(--line);
+  }
+  .part.complete .part-head .num{ color:var(--green); border-color:rgba(111,207,151,0.45); background:var(--green-soft); }
+  .part.current .part-head .num{ color:var(--gold); border-color:rgba(244,196,48,0.5); }
+  .part-head .txt{ flex:1; min-width:0; }
+  .part-head .txt b{ display:block; font-size:14px; font-weight:700; line-height:1.35; }
+  .part-head .txt small{ font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .chev{ flex:none; width:18px; height:18px; color:var(--muted); transition:transform .2s ease; }
+  .part-head[aria-expanded="true"] .chev{ transform:rotate(180deg); }
+
+  .lessons{ list-style:none; margin:0; padding:0 0 8px; }
+  .lessons[hidden]{ display:none; }
+  .lesson{
+    width:100%; display:flex; align-items:center; gap:12px;
+    padding:10px 18px 10px 20px; border:0; background:transparent; text-align:left;
+    border-left:3px solid transparent;
+    transition:background-color .15s ease;
+  }
+  .lesson:hover:not([aria-disabled="true"]){ background:var(--surface-3); }
+  .lesson[aria-current="true"]{ background:var(--gold-soft); border-left-color:var(--gold); }
+  .lesson[aria-disabled="true"]{ cursor:default; }
+  .lesson .st{
+    flex:none; width:24px; height:24px; border-radius:50%;
+    display:grid; place-items:center;
+    border:1.5px solid var(--line-strong); color:var(--muted);
+  }
+  .lesson .st svg{ width:12px; height:12px; }
+  .lesson.is-done .st{ background:var(--green); border-color:var(--green); color:var(--ink); }
+  .lesson[aria-current="true"] .st{ border-color:var(--gold); color:var(--gold); }
+  .lesson[aria-current="true"].is-done .st{ background:var(--green); border-color:var(--green); color:var(--ink); }
+  .lesson .body{ flex:1; min-width:0; }
+  .lesson .t{ display:block; font-size:13.5px; line-height:1.4; }
+  .lesson[aria-current="true"] .t{ color:var(--gold); font-weight:600; }
+  .lesson[aria-disabled="true"] .t{ color:var(--muted); }
+  .lesson .sub{ display:block; margin-top:2px; font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .lesson .soon{ color:var(--muted); opacity:.8; }
+
+  /* ---------- footer ---------- */
+  footer{
+    border-top:1px solid var(--line); padding:28px 24px 40px;
+    text-align:center; color:var(--muted); font-size:13px;
+  }
+  footer nav{ display:flex; justify-content:center; gap:6px 18px; flex-wrap:wrap; margin-top:8px; }
+  footer a{ color:var(--paper); text-decoration:none; border-bottom:1px solid var(--line-strong); }
+  footer a:hover{ border-color:var(--gold); color:var(--gold); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1080px){
+    .layout{ grid-template-columns:1fr; }
+    .playlist{ position:static; max-height:none; }
+    .pl-body{ overflow:visible; }
+  }
+  @media (max-width:640px){
+    :root{ --topbar-h:58px; }
+    .topbar{ padding:0 16px; }
+    .top-actions .btn-ghost{ display:none; }
+    .layout{ padding:0 0 48px; gap:20px; }
+    .player-frame{ border-radius:0; border-left:0; border-right:0; }
+    .lesson-head, .stats, .support, .playlist{ margin-left:16px; margin-right:16px; }
+    .stats{ grid-template-columns:repeat(2,1fr); }
+    .controls{ width:100%; }
+    .controls .btn{ flex:1; padding:0 10px; }
+    .chrome-top{ padding:10px 36px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#player-section">Bỏ qua đến video</a>
+
+<header class="topbar">
+  <a class="brand" href="https://emtamlamads.com/" aria-label="Em Tâm Làm Ads — Trang chủ">
+    <span class="logo" aria-hidden="true"></span>
+    <span class="name">EM TÂM LÀM ADS<small>Khu vực học viên</small></span>
+  </a>
+  <div class="top-actions">
+    <span class="pill" id="top-progress" aria-live="polite">
+      <svg class="ring" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="2.5"/>
+        <circle id="ring-fg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27" transform="rotate(-90 10 10)"/>
+      </svg>
+      <span id="top-progress-text">0% hoàn thành</span>
+    </span>
+    <a class="btn-ghost" href="https://emtamlamads.com/khoahocvideo">Trang khoá học ↗</a>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="stage" id="player-section">
+    <div class="player-frame">
+      <div class="chrome-top" aria-hidden="true">
+        <span class="rec"><span class="dot"></span>ĐANG PHÁT</span>
+        <span id="player-timecode">INTRO</span>
+      </div>
+      <span class="corner tl" aria-hidden="true"></span><span class="corner tr" aria-hidden="true"></span>
+      <span class="corner bl" aria-hidden="true"></span><span class="corner br" aria-hidden="true"></span>
+      <iframe id="player" title="Video bài học" loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+
+    <div class="lesson-head">
+      <div class="info">
+        <div class="meta" id="player-meta">Video giới thiệu</div>
+        <h1 id="player-title">Đang tải bài học…</h1>
+        <p class="part-name" id="player-part"></p>
+      </div>
+      <div class="controls">
+        <button class="btn" id="btn-prev" type="button" aria-label="Bài trước">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5"/></svg>Bài trước
+        </button>
+        <button class="btn" id="btn-done" type="button" aria-pressed="false">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg><span>Đánh dấu đã học</span>
+        </button>
+        <button class="btn primary" id="btn-next" type="button" aria-label="Bài tiếp theo">
+          Bài tiếp<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <section class="stats" aria-label="Tổng quan khoá học">
+      <div class="stat"><div class="n" id="stat-parts">–</div><div class="l">Phần học</div></div>
+      <div class="stat"><div class="n" id="stat-lessons">–</div><div class="l">Bài giảng</div></div>
+      <div class="stat"><div class="n" id="stat-duration">–</div><div class="l">Thời lượng</div></div>
+      <div class="stat"><div class="n">∞</div><div class="l">Xem lại trọn đời</div></div>
+    </section>
+
+    <section class="support" aria-label="Hỗ trợ học viên">
+      <p><strong>Cần hỗ trợ trong quá trình học?</strong>Nhắn Em Tâm bất cứ lúc nào — mình sẽ trả lời sớm nhất.</p>
+      <div class="links">
+        <a class="btn" href="https://zalo.me/0965817021" target="_blank" rel="noopener">Zalo 0965 817 021</a>
+        <a class="btn" href="https://www.facebook.com/profile.php?id=61590304574447" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </section>
+  </main>
+
+  <aside class="playlist" aria-labelledby="pl-title">
+    <div class="pl-head">
+      <h2 id="pl-title">Nội dung khoá học</h2>
+      <div class="progress-row"><span id="pl-count">0/0 bài đã học</span><b id="pl-pct">0%</b></div>
+      <div class="bar" role="progressbar" aria-label="Tiến độ học" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pl-bar"><span></span></div>
+      <label class="search">
+        <span class="sr-only">Tìm bài học</span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.5 13.5 3 3"/></svg>
+        <input type="search" id="pl-search" placeholder="Tìm bài học…" autocomplete="off">
+      </label>
+    </div>
+    <div class="pl-body" id="pl-body"></div>
+  </aside>
+</div>
+
+<footer>
+  © <span id="year">2024</span> Em Tâm Làm Ads. Mọi quyền được bảo lưu.
+  <nav aria-label="Liên kết cuối trang">
+    <a href="https://emtamlamads.com/">Trang chủ</a>
+    <a href="https://emtamlamads.com/khoahocvideo">Trang khoá học</a>
+    <a href="https://www.facebook.com/profile.php?id=61590304574447" target="_blank" rel="noopener">Facebook Em Tâm</a>
+    <a href="https://zalo.me/0965817021" target="_blank" rel="noopener">Zalo: 0965 817 021</a>
+  </nav>
+</footer>
+
+<script>
+/* ================================================================
+   DỮ LIỆU KHOÁ HỌC — chỉ cần sửa ở đây.
+   Mỗi bài có 3 ô:
+   - title: tên bài học.
+   - url:   dán link video vào giữa "". Dán link YouTube kiểu nào cũng được
+            (youtube.com/watch?v=…, youtu.be/…, shorts/…, embed/…) — trang
+            sẽ tự chuyển sang dạng nhúng. Link nhúng khác (Vimeo, Drive…)
+            thì dán link embed.
+            Để trống "" nếu chưa có — bài sẽ hiện "Sắp ra mắt" 🔒.
+   - dur:   thời lượng, dạng "mm:ss" (không bắt buộc).
+   Nếu bài nào cũng có "dur", ô Thời lượng sẽ tự cộng tổng;
+   nếu chưa đủ, trang dùng TOTAL_DURATION bên dưới.
+   ================================================================ */
+const TOTAL_DURATION = "3h26p";
+
+const INTRO = {
+  title: "Vì sao điện thoại có thể kiếm được tiền?",
+  url: "https://www.youtube.com/embed/990wKc7Xh3M",
+  dur: "02:02",
+};
+
+const PARTS = [
+  { title: "Nhập môn & Tư duy kiếm tiền bằng điện thoại", lessons: [
+    { title: "Chúng ta luôn bắt đầu từ sự thiếu tự tin",            url: "https://www.youtube.com/embed/nXKFDh5f0VA", dur: "" },
+    { title: "Các mô hình kiếm tiền phổ biến từ video điện thoại",  url: "https://www.youtube.com/embed/nXKFDh5f0VA", dur: "" }, // link thử
+    { title: "Xác định phong cách nội dung phù hợp với bạn",        url: "", dur: "" },
+    { title: "Chuẩn bị thiết bị: điện thoại & phụ kiện cần thiết",  url: "", dur: "" },
+    { title: "Cài đặt điện thoại tối ưu cho quay chụp",             url: "", dur: "" },
+    { title: "Các app hỗ trợ chụp ảnh, quay video cần có",          url: "", dur: "" },
+    { title: "Lộ trình học tập trong khoá học này",                 url: "", dur: "" },
+  ]},
+  { title: "Làm chủ camera điện thoại", lessons: [
+    { title: "Tìm hiểu giao diện camera điện thoại",                        url: "", dur: "" },
+    { title: "Thông số quan trọng: ISO, tốc độ màn trập, cân bằng trắng",   url: "", dur: "" },
+    { title: "Lấy nét và đo sáng thủ công",                                 url: "", dur: "" },
+    { title: "Chụp ảnh chân dung bằng điện thoại",                          url: "", dur: "" },
+    { title: "Chụp ảnh sản phẩm, đồ ăn",                                    url: "", dur: "" },
+    { title: "Các lỗi thường gặp khi chụp và cách khắc phục",               url: "", dur: "" },
+  ]},
+  { title: "Bố cục & ánh sáng khi quay chụp", lessons: [
+    { title: "Nguyên tắc bố cục một phần ba",                       url: "", dur: "" },
+    { title: "Các góc quay tạo chiều sâu cho video",                url: "", dur: "" },
+    { title: "Tận dụng ánh sáng tự nhiên",                          url: "", dur: "" },
+    { title: "Ánh sáng nhân tạo cơ bản cho người mới",              url: "", dur: "" },
+    { title: "Phối màu và không gian quay",                         url: "", dur: "" },
+    { title: "Thực hành bố cục qua các tình huống thực tế",         url: "", dur: "" },
+  ]},
+  { title: "Kỹ thuật quay video chuyên nghiệp", lessons: [
+    { title: "Các cỡ cảnh cơ bản trong quay video",                 url: "", dur: "" },
+    { title: "Kỹ thuật lia máy, di chuyển mượt mà",                 url: "", dur: "" },
+    { title: "Quay chuyển động chậm, tua nhanh thời gian",          url: "", dur: "" },
+    { title: "Ghi âm thanh chất lượng khi quay bằng điện thoại",    url: "", dur: "" },
+    { title: "Quay nhiều cảnh cho một kịch bản hoàn chỉnh",         url: "", dur: "" },
+    { title: "Kỹ thuật quay phỏng vấn, chia sẻ trước máy",          url: "", dur: "" },
+  ]},
+  { title: "Dựng video cơ bản trên điện thoại", lessons: [
+    { title: "Làm quen ứng dụng dựng video trên điện thoại",        url: "", dur: "" },
+    { title: "Cắt ghép và sắp xếp cảnh quay",                       url: "", dur: "" },
+    { title: "Thêm nhạc nền và hiệu ứng âm thanh",                  url: "", dur: "" },
+    { title: "Thêm chữ, tiêu đề cho video",                         url: "", dur: "" },
+    { title: "Các kiểu chuyển cảnh cơ bản",                         url: "", dur: "" },
+    { title: "Xuất video đúng chuẩn cho từng nền tảng",             url: "", dur: "" },
+  ]},
+  { title: "Dựng video nâng cao & hiệu ứng", lessons: [
+    { title: "Chỉnh màu video chuyên nghiệp",                       url: "", dur: "" },
+    { title: "Hiệu ứng chuyển động và keyframe",                    url: "", dur: "" },
+    { title: "Lồng tiếng và đồng bộ âm thanh",                      url: "", dur: "" },
+    { title: "Tạo template dựng video để tái sử dụng",              url: "", dur: "" },
+    { title: "Dựng video theo hướng kể chuyện (storytelling)",      url: "", dur: "" },
+    { title: "Mẹo tối ưu tốc độ khi dựng video",                    url: "", dur: "" },
+  ]},
+  { title: "Xuất bản, tối ưu & kiếm tiền", lessons: [
+    { title: "Tối ưu tiêu đề, mô tả và thẻ cho video",              url: "", dur: "" },
+    { title: "Chọn nền tảng đăng phù hợp với nội dung",             url: "", dur: "" },
+    { title: "Thời điểm đăng bài hiệu quả nhất",                    url: "", dur: "" },
+    { title: "Xây dựng kênh và giữ chân người xem",                 url: "", dur: "" },
+    { title: "Kết nối với nhãn hàng để nhận hợp đồng",              url: "", dur: "" },
+    { title: "Các hình thức kiếm tiền từ nền tảng",                 url: "", dur: "" },
+    { title: "Tổng kết khoá học & lộ trình phát triển tiếp theo",   url: "", dur: "" },
+  ]},
+];
+
+/* ================================================================
+   PHẦN XỬ LÝ — không cần sửa bên dưới.
+   ================================================================ */
+(function(){
+  "use strict";
+
+  const STORE_KEY = "etla.khoahocvideo.v1";
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, "0");
+  const ICONS = {
+    play:  '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" fill="currentColor"/></svg>',
+    check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    lock:  '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="5.2" width="7" height="5" rx="1" fill="currentColor"/><path d="M4 5.2V4a2 2 0 0 1 4 0v1.2" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>',
+    chev:  '<svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg>',
+  };
+
+  /* ---- chuyển mọi dạng link YouTube sang link nhúng ---- */
+  function toEmbed(url, autoplay){
+    if(!url) return "";
+    let id = "";
+    try{
+      const u = new URL(url.trim());
+      const host = u.hostname.replace(/^www\.|^m\./, "");
+      if(host === "youtu.be") id = u.pathname.slice(1);
+      else if(/youtube(-nocookie)?\.com$/.test(host)){
+        if(u.searchParams.get("v")) id = u.searchParams.get("v");
+        else{
+          const m = u.pathname.match(/\/(embed|shorts|live|v)\/([^/?#]+)/);
+          if(m) id = m[2];
+        }
+      }
+    }catch(e){ return url; }
+    if(!id) return url;
+    return "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id) +
+      "?rel=0&modestbranding=1&playsinline=1" + (autoplay ? "&autoplay=1" : "");
+  }
+
+  function durToSec(d){
+    if(!d) return null;
+    const p = d.split(":").map(Number);
+    if(p.some(isNaN)) return null;
+    return p.reduce((acc, v) => acc * 60 + v, 0);
+  }
+  function fmtTotal(sec){
+    const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    return h ? `${h}h${pad(m)}p` : `${m}p`;
+  }
+  const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+
+  /* ---- danh sách phẳng: intro + toàn bộ bài ---- */
+  const ITEMS = [];
+  if(INTRO && INTRO.url){
+    ITEMS.push({ id:"intro", title:INTRO.title, url:INTRO.url, dur:INTRO.dur || "", part:-1, idx:0 });
+  }
+  PARTS.forEach((part, pi) => part.lessons.forEach((l, li) => {
+    ITEMS.push({ id:`p${pi+1}-b${pad(li+1)}`, title:l.title || `Bài ${pad(li+1)}`, url:l.url || "", dur:l.dur || "", part:pi, idx:li });
+  }));
+  const LESSONS = ITEMS.filter(it => it.part >= 0);
+  const PLAYABLE = ITEMS.filter(it => it.url);
+  const byId = Object.fromEntries(ITEMS.map(it => [it.id, it]));
+
+  /* ---- lưu tiến độ (an toàn khi trình duyệt chặn bộ nhớ) ---- */
+  let state = { done:[], last:"" };
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if(saved && Array.isArray(saved.done)) state = { done:saved.done.filter(id => byId[id]), last:saved.last || "" };
+  }catch(e){}
+  const done = new Set(state.done);
+  function save(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify({ done:[...done], last:current && current.id })); }catch(e){}
+  }
+
+  /* ---- thống kê ---- */
+  $("stat-parts").textContent = PARTS.length;
+  $("stat-lessons").textContent = LESSONS.length;
+  const secs = LESSONS.map(l => durToSec(l.dur));
+  $("stat-duration").textContent = secs.every(s => s !== null) && secs.length ? fmtTotal(secs.reduce((a, b) => a + b, 0)) : TOTAL_DURATION;
+  $("year").textContent = new Date().getFullYear();
+
+  /* ---- dựng playlist ---- */
+  const body = $("pl-body");
+  const rowById = {};
+  const partEls = [];
+
+  function lessonRow(it, label){
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "lesson";
+    b.dataset.id = it.id;
+    if(!it.url) b.setAttribute("aria-disabled", "true");
+    const st = document.createElement("span");
+    st.className = "st";
+    const bodyEl = document.createElement("span");
+    bodyEl.className = "body";
+    const t = document.createElement("span");
+    t.className = "t";
+    t.textContent = it.title;
+    const sub = document.createElement("span");
+    sub.className = "sub";
+    sub.textContent = label + (it.dur ? " · " + it.dur : "");
+    if(!it.url){
+      const soon = document.createElement("span");
+      soon.className = "soon";
+      soon.textContent = " · Sắp ra mắt";
+      sub.appendChild(soon);
+    }
+    bodyEl.append(t, sub);
+    b.append(st, bodyEl);
+    b.addEventListener("click", () => { if(it.url) select(it.id, true); });
+    li.appendChild(b);
+    rowById[it.id] = b;
+    return li;
+  }
+
+  function buildGroup(key, numText, title, items, labelFn){
+    const wrap = document.createElement("div");
+    wrap.className = "part";
+    const head = document.createElement("button");
+    head.type = "button";
+    head.className = "part-head";
+    head.setAttribute("aria-expanded", "false");
+    head.setAttribute("aria-controls", "list-" + key);
+    head.innerHTML = `<span class="num"></span><span class="txt"><b></b><small></small></span>${ICONS.chev}`;
+    head.querySelector(".num").textContent = numText;
+    head.querySelector("b").textContent = title;
+    const ul = document.createElement("ul");
+    ul.className = "lessons";
+    ul.id = "list-" + key;
+    ul.hidden = true;
+    items.forEach((it, i) => ul.appendChild(lessonRow(it, labelFn(it, i))));
+    head.addEventListener("click", () => setOpen(wrap, ul.hidden));
+    wrap.append(head, ul);
+    body.appendChild(wrap);
+    const g = { wrap, head, ul, items, small:head.querySelector("small") };
+    partEls.push(g);
+    return g;
+  }
+  function setOpen(wrap, open){
+    wrap.querySelector(".part-head").setAttribute("aria-expanded", String(open));
+    wrap.querySelector(".lessons").hidden = !open;
+  }
+
+  const introItem = byId.intro;
+  if(introItem) buildGroup("intro", "▶", "Bắt đầu tại đây", [introItem], () => "Video giới thiệu");
+  PARTS.forEach((part, pi) => {
+    buildGroup("p" + (pi+1), pad(pi+1), part.title, LESSONS.filter(l => l.part === pi), (it) => `Bài ${pad(it.idx+1)}`);
+  });
+  const empty = document.createElement("p");
+  empty.className = "pl-empty";
+  empty.textContent = "Không tìm thấy bài học phù hợp.";
+  empty.hidden = true;
+  body.appendChild(empty);
+
+  /* ---- trạng thái hiển thị ---- */
+  let current = null;
+
+  function refresh(){
+    ITEMS.forEach(it => {
+      const row = rowById[it.id];
+      const isDone = done.has(it.id);
+      const isCur = current && current.id === it.id;
+      row.classList.toggle("is-done", isDone);
+      if(isCur) row.setAttribute("aria-current", "true"); else row.removeAttribute("aria-current");
+      row.querySelector(".st").innerHTML = !it.url ? ICONS.lock : isDone ? ICONS.check : ICONS.play;
+    });
+    partEls.forEach(g => {
+      const n = g.items.filter(it => done.has(it.id)).length;
+      const ready = g.items.filter(it => it.url).length;
+      g.small.textContent = g.items.length === 1 && g.items[0].id === "intro"
+        ? (g.items[0].dur || "Giới thiệu")
+        : `${n}/${g.items.length} đã học` + (ready < g.items.length ? ` · ${ready} bài đã mở` : "");
+      g.wrap.classList.toggle("complete", n === g.items.length);
+      g.wrap.classList.toggle("current", !!current && g.items.includes(current));
+    });
+
+    const total = LESSONS.length;
+    const n = LESSONS.filter(l => done.has(l.id)).length;
+    const pct = total ? Math.round(n / total * 100) : 0;
+    $("pl-count").textContent = `${n}/${total} bài đã học`;
+    $("pl-pct").textContent = pct + "%";
+    $("pl-bar").setAttribute("aria-valuenow", pct);
+    $("pl-bar").firstElementChild.style.width = pct + "%";
+    $("top-progress-text").textContent = pct + "% hoàn thành";
+    $("ring-fg").setAttribute("stroke-dashoffset", (50.27 * (1 - pct / 100)).toFixed(2));
+
+    const pos = current ? PLAYABLE.indexOf(current) : -1;
+    $("btn-prev").disabled = pos <= 0;
+    $("btn-next").disabled = pos < 0 || pos >= PLAYABLE.length - 1;
+    const isDone = current && done.has(current.id);
+    const bd = $("btn-done");
+    bd.classList.toggle("done", !!isDone);
+    bd.setAttribute("aria-pressed", String(!!isDone));
+    bd.querySelector("span").textContent = isDone ? "Đã học xong" : "Đánh dấu đã học";
+  }
+
+  function select(id, userAction){
+    const it = byId[id];
+    if(!it || !it.url) return;
+    current = it;
+    $("player").src = toEmbed(it.url, userAction);
+    $("player-title").textContent = it.title;
+    if(it.part < 0){
+      $("player-meta").textContent = "Video giới thiệu" + (it.dur ? " · " + it.dur : "");
+      $("player-part").textContent = "Bắt đầu tại đây";
+      $("player-timecode").textContent = "INTRO";
+    }else{
+      $("player-meta").textContent = `Phần ${it.part+1} · Bài ${pad(it.idx+1)}` + (it.dur ? " · " + it.dur : "");
+      $("player-part").textContent = PARTS[it.part].title;
+      $("player-timecode").textContent = `P${it.part+1} · B${pad(it.idx+1)}`;
+    }
+    document.title = `${it.title} — Em Tâm Làm Ads`;
+    const g = partEls.find(g => g.items.includes(it));
+    if(g) setOpen(g.wrap, true);
+    if(it.part < 0 && partEls[1]) setOpen(partEls[1].wrap, true);
+    try{ history.replaceState(null, "", "#" + it.id); }catch(e){}
+    save();
+    refresh();
+    if(userAction){
+      const stage = $("player-section");
+      if(stage.getBoundingClientRect().top < 0 || window.innerWidth <= 1080) stage.scrollIntoView({ behavior:"smooth", block:"start" });
+    }else{
+      const row = rowById[it.id];
+      const pl = $("pl-body");
+      if(pl.scrollHeight > pl.clientHeight) pl.scrollTop = row.offsetTop - pl.clientHeight / 3;
+    }
+  }
+
+  function step(dir){
+    const pos = PLAYABLE.indexOf(current);
+    const next = PLAYABLE[pos + dir];
+    if(next) select(next.id, true);
+  }
+
+  $("btn-prev").addEventListener("click", () => step(-1));
+  $("btn-next").addEventListener("click", () => {
+    if(current) done.add(current.id);
+    step(1);
+    save(); refresh();
+  });
+  $("btn-done").addEventListener("click", () => {
+    if(!current) return;
+    if(done.has(current.id)) done.delete(current.id); else done.add(current.id);
+    save(); refresh();
+  });
+
+  /* ---- tìm kiếm ---- */
+  const defaultOpen = new Set();
+  $("pl-search").addEventListener("input", (e) => {
+    const q = fold(e.target.value.trim());
+    let any = false;
+    partEls.forEach(g => {
+      let hits = 0;
+      g.items.forEach(it => {
+        const match = !q || fold(it.title).includes(q);
+        rowById[it.id].parentElement.hidden = !match;
+        if(match) hits++;
+      });
+      g.wrap.hidden = q && !hits;
+      if(q) setOpen(g.wrap, hits > 0);
+      else setOpen(g.wrap, !!current && g.items.includes(current));
+      if(hits) any = true;
+    });
+    empty.hidden = any;
+  });
+
+  /* ---- phím tắt: ← → để chuyển bài (khi không gõ chữ) ---- */
+  document.addEventListener("keydown", (e) => {
+    if(e.target.closest("input, textarea") || e.altKey || e.ctrlKey || e.metaKey) return;
+    if(e.key === "ArrowRight" && e.shiftKey) step(1);
+    if(e.key === "ArrowLeft" && e.shiftKey) step(-1);
+  });
+
+  /* ---- khởi động: link #p1-b02 → bài đã xem gần nhất → bài đầu tiên ---- */
+  const fromHash = location.hash.slice(1);
+  const startId = [fromHash, state.last, PLAYABLE[0] && PLAYABLE[0].id].find(id => id && byId[id] && byId[id].url);
+  if(startId) select(startId, false);
+  else{
+    $("player-title").textContent = "Video sẽ sớm được cập nhật";
+    refresh();
+  }
+  window.addEventListener("hashchange", () => select(location.hash.slice(1), true));
+})();
+</script>
+
+</body>
+</html>
