@@ -1,0 +1,820 @@
+<title>Đấu Trường Nhiệm Vụ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Unbounded:wght@600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: app shell — sticky bar with the player's level card, tab rail, one content column (max 1080px) of quest cards, tables and forms */
+:root{
+  --bg:#F1F2EC; --surface:#FFFFFF; --surface-2:#E7E9E0; --fg:#18211C; --muted:#59665E; --line:#D3D8CC;
+  --gold:#A97200; --gold-strong:#D99A12; --gold-soft:#F5E6C0; --on-gold:#1C1400;
+  --xp:#0B7D61; --xp-soft:#D2ECE3; --danger:#B23C28; --danger-soft:#F6DAD3;
+  --info:#2A63A0; --info-soft:#D9E5F2; --boss:#7A389F; --boss-soft:#EBDCF3;
+  --shadow:0 1px 2px rgba(24,33,28,.06),0 4px 14px rgba(24,33,28,.06);
+  --font-display:"Unbounded","Be Vietnam Pro",system-ui,sans-serif;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#161F1B; --surface-2:#1E2924; --fg:#E7EDE8; --muted:#97A59D; --line:#2A3631;
+  --gold:#F0B43A; --gold-strong:#F0B43A; --gold-soft:#3A2D10; --on-gold:#1C1400;
+  --xp:#3DC69E; --xp-soft:#123328; --danger:#EE7A64; --danger-soft:#3B1B15;
+  --info:#77AEE6; --info-soft:#16283B; --boss:#C795E4; --boss-soft:#2C1D36;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#161F1B; --surface-2:#1E2924; --fg:#E7EDE8; --muted:#97A59D; --line:#2A3631;
+  --gold:#F0B43A; --gold-strong:#F0B43A; --gold-soft:#3A2D10; --on-gold:#1C1400;
+  --xp:#3DC69E; --xp-soft:#123328; --danger:#EE7A64; --danger-soft:#3B1B15;
+  --info:#77AEE6; --info-soft:#16283B; --boss:#C795E4; --boss-soft:#2C1D36;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:1.15rem;font-weight:800}
+h3{font-size:.98rem;font-weight:600;font-family:var(--font-body)}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold-strong);outline-offset:2px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1080px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brand h1{font-size:1.05rem;font-weight:800;letter-spacing:.01em}
+.brand span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.mecard{margin-left:auto;display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+.avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none}
+.mebar{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.mebar .row{display:flex;justify-content:space-between;gap:10px;font-size:.8rem}
+.xpbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.xpbar>i{display:block;height:100%;background:var(--xp);border-radius:99px;transition:width .5s ease}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:.82rem;font-weight:600;background:var(--surface-2);white-space:nowrap}
+.pill.coin{background:var(--gold-soft);color:var(--gold)}
+.pill.flame{background:var(--danger-soft);color:var(--danger)}
+.ico{width:14px;height:14px;flex:none}
+
+.tabs{max-width:1080px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:10px 12px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--gold-strong)}
+.tabs .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--danger);color:#fff;font-size:.72rem;line-height:18px;text-align:center}
+
+main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:20px}
+.section{display:flex;flex-direction:column;gap:12px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+.notice{background:var(--info-soft);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:.9rem}
+.notice.warn{background:var(--gold-soft)}
+
+/* segmented filter */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:99px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:99px;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+
+/* quest cards */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.quest{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.quest.boss{border-color:var(--boss);background:linear-gradient(var(--boss-soft),var(--surface) 70%)}
+.q-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--surface-2);color:var(--muted)}
+.chip.daily{background:var(--surface-2);color:var(--fg)}
+.chip.weekly{background:var(--info-soft);color:var(--info)}
+.chip.team{background:var(--gold-soft);color:var(--gold)}
+.chip.boss{background:var(--boss);color:#fff}
+.chip.learn{background:var(--xp-soft);color:var(--xp)}
+.chip.task{background:var(--surface-2);color:var(--fg)}
+.chip.ok{background:var(--xp-soft);color:var(--xp)}
+.chip.wait{background:var(--gold-soft);color:var(--gold)}
+.chip.bad{background:var(--danger-soft);color:var(--danger)}
+.quest p{color:var(--muted);font-size:.88rem;overflow-wrap:anywhere}
+.q-foot{margin-top:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:6px}
+.rew{font-family:var(--font-mono);font-weight:700;font-size:.85rem}
+.rew.xp{color:var(--xp)} .rew.co{color:var(--gold)}
+.q-foot .btn{margin-left:auto}
+.reject-note{font-size:.82rem;color:var(--danger);background:var(--danger-soft);border-radius:8px;padding:6px 8px}
+
+.btn{border:1px solid transparent;border-radius:9px;padding:8px 14px;font-weight:600;font-size:.88rem;cursor:pointer;background:var(--surface-2);color:var(--fg);transition:transform .08s ease,filter .15s}
+.btn:hover{filter:brightness(.97)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--gold-strong);color:var(--on-gold)}
+.btn.good{background:var(--xp);color:#fff}
+.btn.danger{background:var(--danger-soft);color:var(--danger)}
+.btn.ghost{background:transparent;border-color:var(--line)}
+.btn.sm{padding:5px 10px;font-size:.8rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:24px;text-align:center;color:var(--muted);font-size:.9rem}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+
+/* leaderboard */
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tr.me td{background:var(--gold-soft)}
+.who{display:flex;align-items:center;gap:10px}
+.who .avatar{width:28px;height:28px}
+.rank{font-family:var(--font-display);font-weight:800;width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-size:.8rem;background:var(--surface-2)}
+.rank.r1{background:#E9B308;color:#2A1D00}.rank.r2{background:#B9C1C8;color:#1C2228}.rank.r3{background:#C9824A;color:#2A1404}
+
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end}
+.pod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.pod .avatar{width:44px;height:44px}
+.pod.p1{padding-block:20px;border-color:var(--gold-strong)}
+.pod .nm{font-weight:600;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
+
+/* profile */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.lvl-ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--xp) calc(var(--p)*1%),var(--surface-2) 0)}
+.lvl-ring>div{width:68px;height:68px;border-radius:50%;background:var(--surface);display:grid;place-items:center;text-align:center;font-family:var(--font-display);font-weight:800;font-size:1.3rem;line-height:1}
+.lvl-ring small{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--font-mono);font-size:1.25rem}
+.stat span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.grade{font-family:var(--font-display);font-weight:800;font-size:2rem;line-height:1}
+.grade.A{color:var(--xp)}.grade.B{color:var(--info)}.grade.C{color:var(--gold)}.grade.D{color:var(--danger)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.bdg{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;gap:10px;align-items:center;background:var(--surface)}
+.bdg .medal{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:.8rem;background:var(--gold-strong);color:var(--on-gold)}
+.bdg.locked{opacity:.45}.bdg.locked .medal{background:var(--surface-2);color:var(--muted)}
+.bdg b{font-size:.85rem;display:block}.bdg span{font-size:.75rem;color:var(--muted)}
+.hist{display:flex;flex-direction:column}
+.hist>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.hist>div:last-child{border-bottom:0}
+.hist .l{min-width:0;overflow-wrap:anywhere}
+.pos{color:var(--xp)}.neg{color:var(--danger)}
+
+/* rewards */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.reward{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.reward .cost{font-family:var(--font-mono);font-weight:700;color:var(--gold);font-size:1.1rem}
+
+/* forms */
+form{display:flex;flex-direction:column;gap:10px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:70px}
+.list{display:flex;flex-direction:column}
+.list>.item{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.list>.item:last-child{border-bottom:0}
+.item .l{min-width:0;flex:1 1 220px;overflow-wrap:anywhere}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.item .acts input{width:170px}
+
+/* modal + toast */
+.overlay{position:fixed;inset:0;background:rgba(10,14,12,.5);display:grid;place-items:center;padding:16px;z-index:50}
+.modal{background:var(--surface);border-radius:14px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px)}
+.pop{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:560px){.mecard{margin-left:0;width:100%}.mebar{flex:1}.podium{gap:6px}.hero{grid-template-columns:1fr;justify-items:start}}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span>Hệ thống thi đua nội bộ</span><h1>Đấu Trường Nhiệm Vụ</h1></div>
+    <div class="mecard" id="mecard"></div>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="quests" aria-selected="true">Nhiệm vụ</button>
+    <button role="tab" data-tab="board" aria-selected="false">Bảng xếp hạng</button>
+    <button role="tab" data-tab="shop" aria-selected="false">Đổi quà</button>
+    <button role="tab" data-tab="me" aria-selected="false">Hồ sơ của tôi</button>
+    <button role="tab" data-tab="admin" aria-selected="false" hidden id="tab-admin">Quản lý</button>
+  </nav>
+</header>
+
+<main>
+  <div id="status"></div>
+
+  <!-- QUESTS -->
+  <section class="section" data-view="quests">
+    <div id="join"></div>
+    <div class="section-head">
+      <h2>Nhiệm vụ của bạn</h2>
+      <div class="seg" id="qfilter">
+        <button data-f="todo" aria-pressed="true">Cần làm</button>
+        <button data-f="pending" aria-pressed="false">Chờ duyệt</button>
+        <button data-f="done" aria-pressed="false">Đã xong</button>
+      </div>
+    </div>
+    <div id="questlist" class="qgrid"></div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="section" data-view="board" hidden>
+    <div class="section-head">
+      <h2>Bảng xếp hạng</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="seg" id="lbperiod"><button data-p="month" aria-pressed="true">Tháng này</button><button data-p="all" aria-pressed="false">Toàn thời gian</button></div>
+        <div class="seg" id="lbmode"><button data-m="person" aria-pressed="true">Cá nhân</button><button data-m="team" aria-pressed="false">Đội / Cửa hàng</button></div>
+      </div>
+    </div>
+    <div id="podium" class="podium"></div>
+    <div id="lbtable" class="tablewrap"></div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="section" data-view="shop" hidden>
+    <div class="section-head"><h2>Cửa hàng phần thưởng</h2><span class="pill coin" id="shopcoins"></span></div>
+    <div id="rewardlist" class="rgrid"></div>
+    <h2 style="margin-top:8px">Lịch sử đổi quà</h2>
+    <div class="panel"><div id="myredeem" class="list"></div></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="section" data-view="me" hidden>
+    <div class="cols">
+      <div class="panel" id="profilehero"></div>
+      <div class="panel" id="kpicard"></div>
+    </div>
+    <h2>Huy hiệu</h2>
+    <div id="badgelist" class="badges"></div>
+    <h2>Lịch sử điểm</h2>
+    <div class="panel"><div id="history" class="hist"></div></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="section" data-view="admin" hidden>
+    <div class="cols">
+      <div class="panel">
+        <div class="section-head"><h2>Chờ duyệt nhiệm vụ</h2><span class="pill" id="pendcount">0</span></div>
+        <div id="approvals" class="list"></div>
+      </div>
+      <div class="panel">
+        <div class="section-head"><h2>Yêu cầu đổi quà</h2><span class="pill" id="redcount">0</span></div>
+        <div id="redeemreqs" class="list"></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Giao nhiệm vụ mới</h2>
+        <form id="f-quest">
+          <div class="field"><label for="q-title">Tên nhiệm vụ</label><input id="q-title" required maxlength="120" placeholder="VD: Chốt 3 đơn trả góp trong ngày"></div>
+          <div class="field"><label for="q-desc">Mô tả / tiêu chí hoàn thành</label><textarea id="q-desc" maxlength="600" placeholder="Nhân viên cần nộp gì để được duyệt?"></textarea></div>
+          <div class="frow">
+            <div class="field"><label for="q-type">Loại</label><select id="q-type"></select></div>
+            <div class="field"><label for="q-xp">XP</label><input id="q-xp" type="number" min="0" step="5" required></div>
+            <div class="field"><label for="q-coins">Xu</label><input id="q-coins" type="number" min="0" step="1" required></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="q-mode">Giao cho</label>
+              <select id="q-mode"><option value="all">Tất cả nhân viên</option><option value="person">Một người</option><option value="team">Một đội / cửa hàng</option></select></div>
+            <div class="field" id="q-assignee-wrap" hidden><label for="q-assignee">Nhân viên</label><select id="q-assignee"></select></div>
+            <div class="field" id="q-team-wrap" hidden><label for="q-team">Đội</label><select id="q-team"></select></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="q-repeat">Lặp lại</label>
+              <select id="q-repeat"><option value="none">Một lần</option><option value="daily">Mỗi ngày</option><option value="weekly">Mỗi tuần</option></select></div>
+            <div class="field"><label for="q-due">Hạn chót (tuỳ chọn)</label><input id="q-due" type="date"></div>
+          </div>
+          <button class="btn primary" type="submit">Giao nhiệm vụ</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Thưởng nóng / Trừ điểm</h2>
+        <form id="f-adjust">
+          <div class="field"><label for="a-user">Nhân viên</label><select id="a-user" required></select></div>
+          <div class="field"><label for="a-preset">Lý do mẫu</label><select id="a-preset"></select></div>
+          <div class="field"><label for="a-reason">Ghi chú lý do</label><input id="a-reason" required maxlength="160"></div>
+          <div class="frow">
+            <div class="field"><label for="a-xp">XP (+/−)</label><input id="a-xp" type="number" step="5" required></div>
+            <div class="field"><label for="a-coins">Xu (+/−)</label><input id="a-coins" type="number" step="1" value="0" required></div>
+          </div>
+          <button class="btn primary" type="submit">Ghi nhận</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-head"><h2>Nhiệm vụ đang chạy</h2><span class="muted small">Lưu trữ nhiệm vụ để ẩn khỏi danh sách nhân viên</span></div>
+      <div id="activequests" class="list"></div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Phần thưởng</h2>
+        <form id="f-reward">
+          <div class="field"><label for="r-name">Tên phần thưởng</label><input id="r-name" required maxlength="80" placeholder="VD: 1 buổi chiều nghỉ phép"></div>
+          <div class="frow">
+            <div class="field"><label for="r-cost">Giá (xu)</label><input id="r-cost" type="number" min="1" required></div>
+            <div class="field"><label for="r-stock">Số lượng (để trống = không giới hạn)</label><input id="r-stock" type="number" min="0"></div>
+          </div>
+          <button class="btn primary" type="submit">Thêm phần thưởng</button>
+        </form>
+        <div id="rewardadmin" class="list"></div>
+      </div>
+      <div class="panel">
+        <h2>Nhân viên &amp; cài đặt</h2>
+        <form id="f-settings">
+          <div class="field"><label for="s-teams">Danh sách đội / cửa hàng (mỗi dòng một tên)</label><textarea id="s-teams"></textarea></div>
+          <div class="field"><label for="s-target">Chỉ tiêu XP mỗi tháng (dùng để xếp loại A/B/C/D)</label><input id="s-target" type="number" min="1" required></div>
+          <button class="btn primary" type="submit">Lưu cài đặt</button>
+        </form>
+        <div id="playeradmin" class="list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="modal" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h2 id="m-title">Nộp nhiệm vụ</h2>
+    <p class="muted small" id="m-desc"></p>
+    <div class="field"><label for="m-proof">Báo cáo kết quả</label><textarea id="m-proof" maxlength="600" placeholder="VD: Đã chốt 3 đơn: #1023, #1027, #1031"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn ghost" data-act="close-modal">Huỷ</button>
+      <button class="btn primary" data-act="confirm-submit">Nộp để duyệt</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const TYPES = {
+  daily:  {label:"Hằng ngày", xp:20,  coins:5},
+  weekly: {label:"Hằng tuần", xp:150, coins:30},
+  task:   {label:"Giao việc", xp:80,  coins:15},
+  learn:  {label:"Học tập",   xp:50,  coins:10},
+  team:   {label:"Tập thể",   xp:200, coins:40},
+  boss:   {label:"Boss",      xp:500, coins:100},
+};
+const LEVELS = [
+  {n:"Tân binh", min:0}, {n:"Chiến binh", min:500}, {n:"Tinh anh", min:1500},
+  {n:"Cao thủ", min:3000}, {n:"Huyền thoại", min:6000},
+];
+const BADGES = [
+  {k:"1",  n:"Khởi đầu",        d:"Hoàn thành nhiệm vụ đầu tiên",          t:s=>s.done>=1},
+  {k:"10", n:"Chăm chỉ",        d:"Hoàn thành 10 nhiệm vụ",                 t:s=>s.done>=10},
+  {k:"50", n:"Cỗ máy",          d:"Hoàn thành 50 nhiệm vụ",                 t:s=>s.done>=50},
+  {k:"B",  n:"Hạ Boss",         d:"Hoàn thành một nhiệm vụ Boss",           t:s=>s.boss>=1},
+  {k:"H",  n:"Ham học",         d:"Hoàn thành 3 nhiệm vụ học tập",          t:s=>s.learn>=3},
+  {k:"Đ",  n:"Đồng đội",        d:"Góp công 3 nhiệm vụ tập thể",            t:s=>s.team>=3},
+  {k:"7",  n:"Bền bỉ",          d:"Chuỗi 7 ngày liên tiếp có nhiệm vụ",     t:s=>s.bestStreak>=7},
+  {k:"✓",  n:"Sạch lỗi",        d:"Tháng này ≥5 nhiệm vụ, không bị trừ điểm", t:s=>s.penMonth===0&&s.doneMonth>=5},
+];
+const PRESETS = [
+  {label:"Thưởng nóng: khách hàng khen", xp:50, coins:20},
+  {label:"Thưởng nóng: vượt chỉ tiêu ngày", xp:100, coins:30},
+  {label:"Trừ điểm: đi trễ", xp:-20, coins:0},
+  {label:"Trừ điểm: sai quy trình (SOP)", xp:-30, coins:0},
+  {label:"Trừ điểm: khách hàng phàn nàn", xp:-50, coins:-10},
+  {label:"Khác", xp:0, coins:0},
+];
+
+const S = {
+  db:null, user:null, myId:null, isMgr:false, canWrite:null, ready:false,
+  quests:[], ledger:[], rewards:[], redemptions:[], players:{}, config:{teams:["Cửa hàng 1"], monthTarget:1000},
+  profiles:{}, tab:"quests", qf:"todo", lbPeriod:"month", lbMode:"person",
+  submitting:null, confirmRedeem:null, rejecting:{},
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const fmt = n => new Intl.NumberFormat("vi-VN").format(n);
+const signed = n => (n>0?"+":"") + fmt(n);
+function dayKey(t=Date.now()){const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function monthKey(t=Date.now()){const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1);}
+function weekKey(t=Date.now()){
+  const d=new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const w1=new Date(d.getFullYear(),0,4);
+  return d.getFullYear()+"-W"+pad(1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7));
+}
+function daysBetween(a,b){return Math.round((new Date(b+"T00:00")-new Date(a+"T00:00"))/864e5);}
+function hash(s){let h=2166136261;for(const ch of String(s)){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
+function dateVN(t){const d=new Date(t);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+" "+pad(d.getHours())+":"+pad(d.getMinutes());}
+
+const ICON = {
+  coin:'<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor" opacity=".25"/><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  flame:'<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1c1 3 4 4.2 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 1.5.6 2.3 1.4 2.6C7 5.5 7.3 3 8 1z"/></svg>',
+};
+
+function periodOf(q){return q.repeat==="daily"?dayKey():q.repeat==="weekly"?weekKey():"once";}
+function subjectOf(q,uid){return q.mode==="team" ? "team:"+(q.team||"") : uid;}
+function subKey(q,uid){return subjectOf(q,uid)+"|"+periodOf(q);}
+function nameOf(id){const p=S.profiles[id];return (p&&p.name)||(id===S.myId?"Bạn":"Nhân viên");}
+function avatarOf(id){const p=S.profiles[id];return p?p.avatarUrl:"";}
+function avatarImg(id,cls="avatar"){const u=avatarOf(id);return u?`<img class="${cls}" src="${esc(u)}" alt="">`:`<span class="${cls}"></span>`;}
+
+function levelOf(xp){
+  let i=0; LEVELS.forEach((l,k)=>{if(xp>=l.min)i=k;});
+  const cur=LEVELS[i], nx=LEVELS[i+1];
+  return {i, name:cur.n, next:nx?nx.min:null, nextName:nx?nx.n:null, pct:nx?Math.min(100,(xp-cur.min)/(nx.min-cur.min)*100):100};
+}
+const gradeOf = p => p>=90?"A":p>=75?"B":p>=60?"C":"D";
+
+function stats(uid){
+  const mk=monthKey(); let xp=0,xpMonth=0,earned=0,done=0,doneMonth=0,boss=0,learn=0,team=0,penMonth=0;
+  const days=new Set(), entries=[];
+  for(const e of S.ledger){
+    if(e.userId!==uid) continue; entries.push(e);
+    const inM=monthKey(e.at)===mk, x=+e.xp||0;
+    xp+=x; earned+=+e.coins||0; if(inM) xpMonth+=x;
+    if(e.kind==="quest"){done++; if(inM)doneMonth++; if(e.qtype==="boss")boss++; if(e.qtype==="learn")learn++; if(e.teamQuest)team++; days.add(dayKey(e.at));}
+    if(e.kind==="penalty"&&inM) penMonth++;
+  }
+  const spent=S.redemptions.filter(r=>r.userId===uid&&r.status!=="rejected").reduce((a,r)=>a+(+r.cost||0),0);
+  let best=0,run=0,prev=null;
+  for(const d of [...days].sort()){run=(prev&&daysBetween(prev,d)===1)?run+1:1; best=Math.max(best,run); prev=d;}
+  let streak=0; const t=new Date(); if(!days.has(dayKey(t))) t.setDate(t.getDate()-1);
+  while(days.has(dayKey(t))){streak++; t.setDate(t.getDate()-1);}
+  entries.sort((a,b)=>b.at-a.at);
+  return {xp:Math.max(0,xp), xpMonth, coins:earned-spent, done, doneMonth, boss, learn, team, penMonth, streak, bestStreak:best, entries};
+}
+
+/* ---------- render ---------- */
+let rq=0;
+function render(){ if(rq) return; rq=requestAnimationFrame(()=>{rq=0; renderAll();}); }
+function renderAll(){
+  renderStatus(); renderMe(); renderTabs();
+  if(S.tab==="quests") renderQuests();
+  if(S.tab==="board") renderBoard();
+  if(S.tab==="shop") renderShop();
+  if(S.tab==="me") renderProfile();
+  if(S.tab==="admin") renderAdmin();
+  refreshProfiles();
+}
+
+function renderStatus(){
+  const el=$("#status");
+  if(!S.ready){ el.innerHTML=`<div class="notice">Đang kết nối dữ liệu chung của đội…</div>`; return; }
+  if(!S.db){ el.innerHTML=`<div class="notice warn">Không kết nối được kho dữ liệu chung. Hãy mở trang này trong claude.ai khi đã đăng nhập để dùng hệ thống.</div>`; return; }
+  if(!S.myId){ el.innerHTML=`<div class="notice warn">Bạn đang xem ở chế độ chỉ đọc. Hãy đăng nhập claude.ai để nhận và nộp nhiệm vụ.</div>`; return; }
+  if(S.canWrite===false){ el.innerHTML=`<div class="notice warn">Bạn đang có quyền xem. Nhờ quản lý chia sẻ trang này với quyền <b>Contributor</b> để tham gia làm nhiệm vụ.</div>`; return; }
+  el.innerHTML="";
+}
+
+function renderMe(){
+  const el=$("#mecard");
+  if(!S.myId){ el.innerHTML=""; return; }
+  const s=stats(S.myId), lv=levelOf(s.xp);
+  el.innerHTML=`${avatarImg(S.myId)}
+    <div class="mebar"><div class="row"><b>${esc(nameOf(S.myId))} · ${esc(lv.name)}</b><span class="num muted">${fmt(s.xp)} XP</span></div>
+      <div class="xpbar" title="${lv.next?`Còn ${fmt(lv.next-s.xp)} XP lên ${lv.nextName}`:"Cấp tối đa"}"><i style="width:${lv.pct}%"></i></div></div>
+    <span class="pill coin">${ICON.coin}<span class="num">${fmt(s.coins)}</span> xu</span>
+    <span class="pill flame" title="Chuỗi ngày liên tiếp có nhiệm vụ được duyệt">${ICON.flame}<span class="num">${s.streak}</span> ngày</span>`;
+}
+
+function renderTabs(){
+  $("#tab-admin").hidden=!S.isMgr;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===S.tab));
+  document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==S.tab);
+  if(S.isMgr){
+    const n=pendingSubs().length+S.redemptions.filter(r=>r.status==="pending").length;
+    $("#tab-admin").innerHTML="Quản lý"+(n?`<span class="badge num">${n}</span>`:"");
+  }
+}
+
+function myTeam(){return S.players[S.myId]?.team||null;}
+function visibleQuests(){
+  const me=S.myId, team=myTeam();
+  return S.quests.filter(q=>q.status!=="archived" && (q.mode==="all"||(q.mode==="person"&&q.assignee===me)||(q.mode==="team"&&q.team===team)));
+}
+
+function renderQuests(){
+  const join=$("#join");
+  if(S.db && S.myId && S.canWrite!==false && !S.players[S.myId]){
+    const opts=(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join("");
+    join.innerHTML=`<div class="panel"><h2>Chào mừng bạn vào Đấu Trường</h2>
+      <p class="muted">Chọn đội hoặc cửa hàng của bạn để bắt đầu nhận nhiệm vụ, tích XP và đổi quà.</p>
+      <div class="frow"><div class="field"><label for="join-team">Đội / cửa hàng</label><select id="join-team">${opts}</select></div></div>
+      <div><button class="btn primary" data-act="join">Tham gia</button></div></div>`;
+  } else join.innerHTML="";
+
+  document.querySelectorAll("#qfilter button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.f===S.qf));
+  const list=$("#questlist");
+  if(!S.ready){ list.innerHTML=""; return; }
+  const today=dayKey();
+  const rows=visibleQuests().map(q=>{
+    const sub=S.myId?q.submissions?.[subKey(q,S.myId)]:null;
+    const st=!sub?"todo":sub.status==="pending"?"pending":sub.status==="approved"?"done":"todo";
+    return {q,sub,st};
+  }).filter(r=>r.st===S.qf);
+  const order={boss:0,team:1,task:2,weekly:3,daily:4,learn:5};
+  rows.sort((a,b)=>(order[a.q.type]??9)-(order[b.q.type]??9)||(a.q.due||"9").localeCompare(b.q.due||"9"));
+  if(!rows.length){
+    const msg={todo:S.quests.length?"Bạn đã xử lý hết nhiệm vụ. Quay lại sau nhé!":"Chưa có nhiệm vụ nào. Quản lý sẽ giao nhiệm vụ ở tab Quản lý.",pending:"Không có nhiệm vụ nào đang chờ duyệt.",done:"Chưa có nhiệm vụ nào hoàn thành trong kỳ này."}[S.qf];
+    list.innerHTML=`<div class="empty" style="grid-column:1/-1">${msg}</div>`; return;
+  }
+  list.innerHTML=rows.map(({q,sub,st})=>{
+    const T=TYPES[q.type]||TYPES.task;
+    const rep=q.repeat==="daily"?`<span class="chip">Mỗi ngày</span>`:q.repeat==="weekly"?`<span class="chip">Mỗi tuần</span>`:"";
+    const scope=q.mode==="team"?`<span class="chip team">Đội ${esc(q.team)}</span>`:q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"";
+    const overdue=q.due&&q.due<today&&st!=="done";
+    const due=q.due?`<span class="chip ${overdue?"bad":""}">${overdue?"Quá hạn":"Hạn"} ${esc(q.due.split("-").reverse().slice(0,2).join("/"))}</span>`:"";
+    let action="";
+    if(st==="todo") action=`<button class="btn primary sm" data-act="open-submit" data-id="${esc(q.id)}" ${S.canWrite===false||!S.players[S.myId]?"disabled":""}>${sub?.status==="rejected"?"Nộp lại":"Hoàn thành"}</button>`;
+    if(st==="pending") action=`<span class="chip wait" style="margin-left:auto">Chờ duyệt</span>`;
+    if(st==="done") action=`<span class="chip ok" style="margin-left:auto">Đã nhận thưởng</span>`;
+    const rej=sub?.status==="rejected"&&sub.rejectNote?`<div class="reject-note">Bị trả lại: ${esc(sub.rejectNote)}</div>`:"";
+    return `<article class="quest ${q.type==="boss"?"boss":""}">
+      <div class="q-top"><span class="chip ${esc(q.type)}">${esc(T.label)}</span>${rep}${scope}${due}</div>
+      <h3>${esc(q.title)}</h3>${q.desc?`<p>${esc(q.desc)}</p>`:""}${rej}
+      <div class="q-foot"><span class="rew xp">+${fmt(+q.xp||0)} XP</span><span class="rew co">+${fmt(+q.coins||0)} xu</span>${action}</div>
+    </article>`;
+  }).join("");
+}
+
+function renderBoard(){
+  document.querySelectorAll("#lbperiod button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.p===S.lbPeriod));
+  document.querySelectorAll("#lbmode button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.m===S.lbMode));
+  const key=S.lbPeriod==="month"?"xpMonth":"xp";
+  const people=Object.entries(S.players).map(([id,p])=>({id,team:p.team,...stats(id)}));
+  const pod=$("#podium"), tbl=$("#lbtable");
+  if(!people.length){ pod.innerHTML=""; tbl.innerHTML=`<div class="empty">Chưa có ai tham gia. Bảng xếp hạng sẽ hiện khi nhân viên chọn đội ở tab Nhiệm vụ.</div>`; return; }
+  if(S.lbMode==="person"){
+    people.sort((a,b)=>b[key]-a[key]||b.done-a.done);
+    const top=people.slice(0,3);
+    const ord=[top[1],top[0],top[2]];
+    pod.innerHTML=ord.map((p,i)=>p?`<div class="pod ${i===1?"p1":""}"><span class="rank r${[2,1,3][i]}">${[2,1,3][i]}</span>${avatarImg(p.id)}<span class="nm">${esc(nameOf(p.id))}</span><span class="num small">${fmt(p[key])} XP</span></div>`:`<div></div>`).join("");
+    tbl.innerHTML=`<table><thead><tr><th>#</th><th>Nhân viên</th><th>Đội</th><th>Cấp</th><th class="r">XP</th><th class="r">Nhiệm vụ</th><th class="r">Chuỗi</th></tr></thead><tbody>`+
+      people.map((p,i)=>`<tr class="${p.id===S.myId?"me":""}"><td><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td>
+        <td><div class="who">${avatarImg(p.id)}<span>${esc(nameOf(p.id))}</span></div></td><td>${esc(p.team||"—")}</td><td>${esc(levelOf(p.xp).name)}</td>
+        <td class="r num">${fmt(p[key])}</td><td class="r num">${fmt(S.lbPeriod==="month"?p.doneMonth:p.done)}</td><td class="r num">${p.streak}</td></tr>`).join("")+`</tbody></table>`;
+  } else {
+    const teams={};
+    for(const p of people){const t=p.team||"Chưa có đội"; (teams[t]??={name:t,xp:0,n:0,done:0}); teams[t].xp+=p[key]; teams[t].n++; teams[t].done+=S.lbPeriod==="month"?p.doneMonth:p.done;}
+    const arr=Object.values(teams).sort((a,b)=>b.xp-a.xp);
+    pod.innerHTML="";
+    tbl.innerHTML=`<table><thead><tr><th>#</th><th>Đội / cửa hàng</th><th class="r">Thành viên</th><th class="r">Tổng XP</th><th class="r">XP / người</th><th class="r">Nhiệm vụ</th></tr></thead><tbody>`+
+      arr.map((t,i)=>`<tr class="${t.name===myTeam()?"me":""}"><td><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td><td>${esc(t.name)}</td>
+        <td class="r num">${t.n}</td><td class="r num">${fmt(t.xp)}</td><td class="r num">${fmt(Math.round(t.xp/t.n))}</td><td class="r num">${fmt(t.done)}</td></tr>`).join("")+`</tbody></table>`;
+  }
+}
+
+function rewardLeft(r){
+  if(r.stock===null||r.stock===undefined||r.stock==="") return null;
+  const pend=S.redemptions.filter(x=>x.rewardId===r.id&&x.status==="pending").length;
+  return Math.max(0,(+r.stock)-pend);
+}
+function renderShop(){
+  const coins=S.myId?stats(S.myId).coins:0;
+  $("#shopcoins").innerHTML=`${ICON.coin}Bạn có <span class="num">${fmt(coins)}</span> xu`;
+  const list=$("#rewardlist");
+  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>a.cost-b.cost);
+  list.innerHTML=rs.length?rs.map(r=>{
+    const left=rewardLeft(r), out=left===0, poor=coins<r.cost, conf=S.confirmRedeem===r.id;
+    const dis=!S.myId||!S.players[S.myId]||S.canWrite===false||out||poor;
+    return `<div class="reward"><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}
+      <span class="cost">${fmt(r.cost)} xu</span>
+      <span class="muted small">${left===null?"Không giới hạn":out?"Đã hết":`Còn ${left}`}</span>
+      <button class="btn ${conf?"good":"primary"} sm" data-act="redeem" data-id="${esc(r.id)}" ${dis?"disabled":""}>${out?"Hết quà":poor?`Thiếu ${fmt(r.cost-coins)} xu`:conf?"Bấm lần nữa để xác nhận":"Đổi quà"}</button></div>`;
+  }).join(""):`<div class="empty" style="grid-column:1/-1">Chưa có phần thưởng. Quản lý thêm phần thưởng ở tab Quản lý.</div>`;
+  const mine=S.redemptions.filter(r=>r.userId===S.myId).sort((a,b)=>b.at-a.at);
+  $("#myredeem").innerHTML=mine.length?mine.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="muted small">${dateVN(r.at)} · ${fmt(r.cost)} xu</div></div>${statusChip(r.status)}</div>`).join(""):`<p class="muted small">Bạn chưa đổi quà nào.</p>`;
+}
+function statusChip(s){return s==="delivered"?`<span class="chip ok">Đã trao</span>`:s==="rejected"?`<span class="chip bad">Từ chối · hoàn xu</span>`:`<span class="chip wait">Chờ trao</span>`;}
+
+function renderProfile(){
+  if(!S.myId){ $("#profilehero").innerHTML=`<p class="muted">Đăng nhập để xem hồ sơ.</p>`; $("#kpicard").innerHTML=""; $("#badgelist").innerHTML=""; $("#history").innerHTML=""; return; }
+  const s=stats(S.myId), lv=levelOf(s.xp);
+  $("#profilehero").innerHTML=`<div class="hero"><div class="lvl-ring" style="--p:${lv.pct}"><div><span>${lv.i+1}<small>Cấp</small></span></div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0"><h2>${esc(nameOf(S.myId))}</h2>
+    <span class="muted">${esc(lv.name)} · ${esc(S.players[S.myId]?.team||"Chưa chọn đội")}</span>
+    <span class="small">${lv.next?`Còn <b class="num">${fmt(lv.next-s.xp)}</b> XP để lên <b>${esc(lv.nextName)}</b>`:"Bạn đã đạt cấp cao nhất"}</span></div></div>
+    <div class="statrow"><div class="stat"><b>${fmt(s.xp)}</b><span>Tổng XP</span></div><div class="stat"><b>${fmt(s.coins)}</b><span>Xu hiện có</span></div>
+    <div class="stat"><b>${fmt(s.done)}</b><span>Nhiệm vụ</span></div><div class="stat"><b>${s.streak}/${s.bestStreak}</b><span>Chuỗi / Kỷ lục</span></div></div>`;
+  const target=+S.config.monthTarget||1000, pct=Math.max(0,Math.round(s.xpMonth/target*100)), g=gradeOf(pct);
+  $("#kpicard").innerHTML=`<div class="section-head"><h2>KPI tháng ${new Date().getMonth()+1}</h2><span class="grade ${g}">${g}</span></div>
+    <div class="xpbar" style="height:12px"><i style="width:${Math.min(100,pct)}%"></i></div>
+    <div class="small"><b class="num">${fmt(s.xpMonth)}</b> / <span class="num">${fmt(target)}</span> XP mục tiêu · <b class="num">${pct}%</b></div>
+    <div class="muted small">Xếp loại: A ≥ 90% · B 75–89% · C 60–74% · D &lt; 60%. ${s.penMonth?`Tháng này bị trừ điểm ${s.penMonth} lần.`:"Tháng này chưa bị trừ điểm."}</div>`;
+  $("#badgelist").innerHTML=BADGES.map(b=>{const ok=b.t(s);return `<div class="bdg ${ok?"":"locked"}"><span class="medal">${esc(b.k)}</span><div><b>${esc(b.n)}</b><span>${esc(b.d)}</span></div></div>`;}).join("");
+  const kindLbl={quest:"Nhiệm vụ",bonus:"Thưởng nóng",penalty:"Trừ điểm"};
+  $("#history").innerHTML=s.entries.length?s.entries.slice(0,40).map(e=>`<div><div class="l"><b>${esc(kindLbl[e.kind]||e.kind)}</b> · ${esc(e.reason)}<div class="muted small">${dateVN(e.at)}</div></div>
+    <div class="num" style="text-align:right;white-space:nowrap"><span class="${e.xp<0?"neg":"pos"}">${signed(+e.xp||0)} XP</span><br><span class="muted small">${signed(+e.coins||0)} xu</span></div></div>`).join(""):`<p class="muted small">Chưa có điểm nào. Hoàn thành nhiệm vụ đầu tiên để nhận XP.</p>`;
+}
+
+function pendingSubs(){
+  const out=[];
+  for(const q of S.quests) for(const [key,sub] of Object.entries(q.submissions||{})) if(sub&&sub.status==="pending") out.push({q,key,sub});
+  return out.sort((a,b)=>a.sub.at-b.sub.at);
+}
+function playerOptions(sel){
+  const ids=Object.keys(S.players).sort((a,b)=>nameOf(a).localeCompare(nameOf(b),"vi"));
+  return ids.length?ids.map(id=>`<option value="${esc(id)}" ${id===sel?"selected":""}>${esc(nameOf(id))} · ${esc(S.players[id].team||"")}</option>`).join(""):`<option value="">Chưa có nhân viên tham gia</option>`;
+}
+function setOptions(el,html){const v=el.value; if(el.dataset.h===html) return; el.innerHTML=html; el.dataset.h=html; if([...el.options].some(o=>o.value===v)) el.value=v;}
+
+function renderAdmin(){
+  if(!S.isMgr) return;
+  const subs=pendingSubs();
+  $("#pendcount").textContent=subs.length;
+  $("#approvals").innerHTML=subs.length?subs.map(({q,key,sub})=>{
+    const rk=q.id+"::"+key, rejecting=S.rejecting[rk];
+    return `<div class="item"><div class="l"><b>${esc(q.title)}</b> <span class="chip ${esc(q.type)}">${esc((TYPES[q.type]||TYPES.task).label)}</span>
+      <div class="small">${esc(nameOf(sub.by))}${q.mode==="team"?` (đội ${esc(q.team)})`:""} · ${dateVN(sub.at)} · <span class="num">+${fmt(+q.xp||0)} XP</span></div>
+      ${sub.note?`<div class="muted small">“${esc(sub.note)}”</div>`:""}</div>
+      <div class="acts">${rejecting?`<input id="rj-${hash(rk)}" placeholder="Lý do trả lại" maxlength="160"><button class="btn danger sm" data-act="reject" data-id="${esc(q.id)}" data-key="${esc(key)}">Gửi</button>`
+        :`<button class="btn danger sm" data-act="ask-reject" data-id="${esc(q.id)}" data-key="${esc(key)}">Trả lại</button><button class="btn good sm" data-act="approve" data-id="${esc(q.id)}" data-key="${esc(key)}">Duyệt</button>`}</div></div>`;
+  }).join(""):`<p class="muted small">Không có nhiệm vụ nào chờ duyệt.</p>`;
+
+  const reds=S.redemptions.filter(r=>r.status==="pending").sort((a,b)=>a.at-b.at);
+  $("#redcount").textContent=reds.length;
+  $("#redeemreqs").innerHTML=reds.length?reds.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="small">${esc(nameOf(r.userId))} · ${dateVN(r.at)} · ${fmt(r.cost)} xu</div></div>
+    <div class="acts"><button class="btn danger sm" data-act="red-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn good sm" data-act="red-deliver" data-id="${esc(r.id)}">Đã trao</button></div></div>`).join(""):`<p class="muted small">Không có yêu cầu nào.</p>`;
+
+  setOptions($("#q-type"),Object.entries(TYPES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join(""));
+  if(!$("#q-xp").value){ applyTypeDefaults(); }
+  setOptions($("#q-assignee"),playerOptions());
+  setOptions($("#q-team"),(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join(""));
+  setOptions($("#a-user"),playerOptions());
+  setOptions($("#a-preset"),PRESETS.map((p,i)=>`<option value="${i}">${esc(p.label)}</option>`).join(""));
+  if(!$("#a-reason").value) applyPreset();
+
+  const act=S.quests.filter(q=>q.status!=="archived").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  $("#activequests").innerHTML=act.length?act.map(q=>{
+    const n=Object.values(q.submissions||{}).filter(s=>s.status==="approved").length;
+    const to=q.mode==="all"?"Tất cả":q.mode==="team"?"Đội "+q.team:nameOf(q.assignee);
+    return `<div class="item"><div class="l"><b>${esc(q.title)}</b> <span class="chip ${esc(q.type)}">${esc((TYPES[q.type]||TYPES.task).label)}</span>
+      <div class="muted small">${esc(to)} · ${q.repeat==="daily"?"mỗi ngày":q.repeat==="weekly"?"mỗi tuần":"một lần"} · +${fmt(+q.xp||0)} XP / +${fmt(+q.coins||0)} xu · ${n} lượt đã duyệt</div></div>
+      <div class="acts"><button class="btn ghost sm" data-act="archive" data-id="${esc(q.id)}">Lưu trữ</button></div></div>`;
+  }).join(""):`<p class="muted small">Chưa có nhiệm vụ nào.</p>`;
+
+  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>a.cost-b.cost);
+  $("#rewardadmin").innerHTML=rs.map(r=>`<div class="item"><div class="l"><b>${esc(r.name)}</b><div class="muted small">${fmt(r.cost)} xu · ${rewardLeft(r)===null?"không giới hạn":"còn "+rewardLeft(r)}</div></div>
+    <div class="acts"><button class="btn ghost sm" data-act="reward-del" data-id="${esc(r.id)}">Gỡ</button></div></div>`).join("");
+
+  const ta=$("#s-teams"), tg=$("#s-target");
+  if(document.activeElement!==ta && ta.dataset.v!==(S.config.teams||[]).join("\n")){ ta.value=(S.config.teams||[]).join("\n"); ta.dataset.v=ta.value; }
+  if(document.activeElement!==tg && !tg.dataset.touched) tg.value=S.config.monthTarget||1000;
+
+  const teamOpts=t=>(S.config.teams||[]).map(x=>`<option ${x===t?"selected":""}>${esc(x)}</option>`).join("");
+  const pl=Object.entries(S.players).sort((a,b)=>nameOf(a[0]).localeCompare(nameOf(b[0]),"vi"));
+  $("#playeradmin").innerHTML=pl.map(([id,p])=>`<div class="item"><div class="l"><div class="who">${avatarImg(id)}<span>${esc(nameOf(id))}</span></div></div>
+    <div class="acts"><select id="pt-${hash(id)}" data-act="player-team" data-id="${esc(id)}" aria-label="Đội của ${esc(nameOf(id))}">${teamOpts(p.team)}${(S.config.teams||[]).includes(p.team)?"":`<option selected>${esc(p.team||"")}</option>`}</select></div></div>`).join("");
+}
+function applyTypeDefaults(){const t=TYPES[$("#q-type").value]||TYPES.task; $("#q-xp").value=t.xp; $("#q-coins").value=t.coins; if($("#q-type").value==="daily") $("#q-repeat").value="daily"; if($("#q-type").value==="weekly") $("#q-repeat").value="weekly"; if($("#q-type").value==="team") {$("#q-mode").value="team"; modeChanged();}}
+function applyPreset(){const p=PRESETS[+$("#a-preset").value||0]; $("#a-reason").value=p.label==="Khác"?"":p.label.replace(/^[^:]+:\s*/,""); $("#a-xp").value=p.xp; $("#a-coins").value=p.coins;}
+function modeChanged(){const m=$("#q-mode").value; $("#q-assignee-wrap").hidden=m!=="person"; $("#q-team-wrap").hidden=m!=="team";}
+
+/* profiles: resolve names of everyone on screen, re-render only when something changed */
+let profSig="";
+async function refreshProfiles(){
+  if(!S.user) return;
+  const ids=new Set(Object.keys(S.players)); if(S.myId) ids.add(S.myId);
+  S.redemptions.forEach(r=>ids.add(r.userId));
+  if(!ids.size) return;
+  const ps=await S.user.profiles([...ids]);
+  const sig=[...ids].map(i=>i+":"+(ps[i]?.name||"")+(ps[i]?.avatarUrl||"").length).join(",");
+  if(sig===profSig) return; profSig=sig; S.profiles=ps; render();
+}
+
+/* ---------- actions ---------- */
+function toast(msg){const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2600);}
+async function run(fn,okMsg){
+  try{ await fn(); if(okMsg) toast(okMsg); }
+  catch(e){
+    const c=e&&e.code;
+    toast(c==="invalid_argument"?"Bạn không có quyền thực hiện thao tác này.":c==="quota_exceeded"?"Kho dữ liệu đã đầy. Hãy lưu trữ bớt dữ liệu cũ.":"Chưa lưu được, thử lại sau ít phút.");
+    console.error(e);
+  }
+}
+
+document.addEventListener("click", async ev=>{
+  const tab=ev.target.closest("#tabs button"); if(tab){ S.tab=tab.dataset.tab; try{localStorage.setItem("dtnv-tab",S.tab)}catch{} renderAll(); return; }
+  const f=ev.target.closest("#qfilter button"); if(f){ S.qf=f.dataset.f; renderQuests(); return; }
+  const p=ev.target.closest("#lbperiod button"); if(p){ S.lbPeriod=p.dataset.p; renderBoard(); return; }
+  const m=ev.target.closest("#lbmode button"); if(m){ S.lbMode=m.dataset.m; renderBoard(); return; }
+  if(ev.target.id==="modal"){ closeModal(); return; }
+  const b=ev.target.closest("[data-act]"); if(!b||b.tagName==="SELECT") return;
+  const id=b.dataset.id, key=b.dataset.key, db=S.db;
+  switch(b.dataset.act){
+    case "join": {
+      const team=$("#join-team")?.value||"";
+      await run(()=>db.doc("players/"+S.myId).set({team, joinedAt:Date.now()}),"Chào mừng chiến binh mới!");
+      break;
+    }
+    case "open-submit": {
+      const q=S.quests.find(x=>x.id===id); if(!q) return;
+      S.submitting=id; $("#m-title").textContent=q.title; $("#m-desc").textContent=q.desc||"Mô tả ngắn kết quả để quản lý duyệt.";
+      $("#m-proof").value=""; $("#modal").hidden=false; $("#m-proof").focus(); break;
+    }
+    case "close-modal": closeModal(); break;
+    case "confirm-submit": {
+      const q=S.quests.find(x=>x.id===S.submitting); if(!q) return;
+      const k=subKey(q,S.myId), note=$("#m-proof").value.trim();
+      b.disabled=true;
+      await run(()=>db.doc("quests/"+q.id).update({submissions:{[k]:{by:S.myId,subject:subjectOf(q,S.myId),period:periodOf(q),note,at:Date.now(),status:"pending",rejectNote:""}}}),"Đã nộp, chờ quản lý duyệt");
+      b.disabled=false; closeModal(); break;
+    }
+    case "approve": {
+      const q=S.quests.find(x=>x.id===id), sub=q?.submissions?.[key]; if(!sub) return;
+      const recips=q.mode==="team"?Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u):[sub.by];
+      b.disabled=true;
+      await run(async()=>{
+        for(const u of recips) await db.doc("ledger/q-"+hash(q.id+"|"+key+"|"+u)).set({userId:u,xp:+q.xp||0,coins:+q.coins||0,kind:"quest",qtype:q.type,teamQuest:q.mode==="team",questId:q.id,reason:q.title,at:Date.now(),by:S.myId});
+        await db.doc("quests/"+q.id).update({submissions:{[key]:{status:"approved",reviewedBy:S.myId,reviewedAt:Date.now()}}});
+      },`Đã duyệt · +${q.xp} XP cho ${recips.length} người`);
+      break;
+    }
+    case "ask-reject": S.rejecting[id+"::"+key]=true; renderAdmin(); $("#rj-"+hash(id+"::"+key))?.focus(); break;
+    case "reject": {
+      const note=($("#rj-"+hash(id+"::"+key))?.value||"").trim();
+      if(!note){ toast("Nhập lý do để nhân viên biết cần sửa gì."); return; }
+      delete S.rejecting[id+"::"+key];
+      await run(()=>db.doc("quests/"+id).update({submissions:{[key]:{status:"rejected",rejectNote:note,reviewedBy:S.myId,reviewedAt:Date.now()}}}),"Đã trả lại nhiệm vụ");
+      break;
+    }
+    case "archive": await run(()=>db.doc("quests/"+id).update({status:"archived"}),"Đã lưu trữ nhiệm vụ"); break;
+    case "redeem": {
+      if(S.confirmRedeem!==id){ S.confirmRedeem=id; renderShop(); clearTimeout(S.crT); S.crT=setTimeout(()=>{S.confirmRedeem=null; renderShop();},4000); return; }
+      S.confirmRedeem=null;
+      const r=S.rewards.find(x=>x.id===id); if(!r) return;
+      if(stats(S.myId).coins<r.cost){ toast("Bạn chưa đủ xu."); renderShop(); return; }
+      await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:r.name,cost:+r.cost,status:"pending",at:Date.now()}),"Đã gửi yêu cầu đổi quà");
+      break;
+    }
+    case "red-deliver": {
+      const red=S.redemptions.find(x=>x.id===id), r=S.rewards.find(x=>x.id===red?.rewardId);
+      await run(async()=>{
+        await db.doc("redemptions/"+id).update({status:"delivered",doneBy:S.myId,doneAt:Date.now()});
+        if(r&&r.stock!==null&&r.stock!==undefined&&r.stock!=="") await db.doc("rewards/"+r.id).update({stock:Math.max(0,(+r.stock)-1)});
+      },"Đã đánh dấu trao quà"); break;
+    }
+    case "red-reject": await run(()=>db.doc("redemptions/"+id).update({status:"rejected",doneBy:S.myId,doneAt:Date.now()}),"Đã từ chối, xu được hoàn lại"); break;
+    case "reward-del": await run(()=>db.doc("rewards/"+id).update({archived:true}),"Đã gỡ phần thưởng"); break;
+  }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#modal").hidden) closeModal(); });
+function closeModal(){ $("#modal").hidden=true; S.submitting=null; }
+
+document.addEventListener("change", e=>{
+  if(e.target.id==="q-type") applyTypeDefaults();
+  if(e.target.id==="q-mode") modeChanged();
+  if(e.target.id==="a-preset") applyPreset();
+  if(e.target.id==="s-target") e.target.dataset.touched="1";
+  if(e.target.dataset.act==="player-team") run(()=>S.db.doc("players/"+e.target.dataset.id).update({team:e.target.value}),"Đã đổi đội");
+});
+
+$("#f-quest").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const mode=$("#q-mode").value;
+  const q={title:$("#q-title").value.trim(), desc:$("#q-desc").value.trim(), type:$("#q-type").value,
+    xp:Math.max(0,+$("#q-xp").value||0), coins:Math.max(0,+$("#q-coins").value||0), mode,
+    assignee:mode==="person"?$("#q-assignee").value:null, team:mode==="team"?$("#q-team").value:null,
+    repeat:$("#q-repeat").value, due:$("#q-due").value||null, status:"active", createdBy:S.myId, createdAt:Date.now(), submissions:{}};
+  if(!q.title) return;
+  if(mode==="person"&&!q.assignee){ toast("Chưa có nhân viên nào để giao."); return; }
+  await run(()=>S.db.collection("quests").add(q),"Đã giao nhiệm vụ");
+  $("#q-title").value=""; $("#q-desc").value=""; $("#q-due").value="";
+});
+$("#f-adjust").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const xp=+$("#a-xp").value||0, coins=+$("#a-coins").value||0, userId=$("#a-user").value;
+  if(!userId) return;
+  await run(()=>S.db.collection("ledger").add({userId,xp,coins,kind:xp<0||coins<0?"penalty":"bonus",reason:$("#a-reason").value.trim(),at:Date.now(),by:S.myId}),
+    `Đã ghi ${signed(xp)} XP cho ${nameOf(userId)}`);
+});
+$("#f-reward").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const st=$("#r-stock").value;
+  await run(()=>S.db.collection("rewards").add({name:$("#r-name").value.trim(),cost:Math.max(1,+$("#r-cost").value||1),stock:st===""?null:Math.max(0,+st),createdAt:Date.now()}),"Đã thêm phần thưởng");
+  e.target.reset();
+});
+$("#f-settings").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const teams=$("#s-teams").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  await run(()=>S.db.doc("config/settings").set({teams:teams.length?teams:["Cửa hàng 1"],monthTarget:Math.max(1,+$("#s-target").value||1000)}),"Đã lưu cài đặt");
+  delete $("#s-target").dataset.touched;
+});
+
+/* ---------- boot ---------- */
+async function init(){
+  try{ const t=localStorage.getItem("dtnv-tab"); if(t&&t!=="admin") S.tab=t; }catch{}
+  const h=location.hash.slice(1); if(["quests","board","shop","me","admin"].includes(h)) S.tab=h;
+  renderAll();
+  const use=window.claude&&window.claude.use;
+  const [db,user]=use?await Promise.all([window.claude.use("db"),window.claude.use("user")]):[null,null];
+  S.db=db; S.user=user;
+  if(user){ S.myId=await user.id(); S.isMgr=await user.canEdit(); S.canWrite=await user.can("data.write"); }
+  if(S.tab==="admin"&&!S.isMgr) S.tab="quests";
+  S.ready=true;
+  if(!db){ renderAll(); return; }
+  const onErr=e=>{ if(e&&e.code!=="revoked") toast("Mất kết nối dữ liệu, hãy tải lại trang."); };
+  const coll=(path,set)=>db.collection(path).onSnapshot(snap=>{ set(snap.docs.map(d=>({id:d.id,...d.data()}))); render(); }, onErr);
+  coll("quests", a=>S.quests=a);
+  coll("ledger", a=>S.ledger=a);
+  coll("rewards", a=>S.rewards=a);
+  coll("redemptions", a=>S.redemptions=a);
+  coll("players", a=>{ S.players=Object.fromEntries(a.map(p=>[p.id,p])); });
+  db.doc("config/settings").onSnapshot(d=>{ if(d.exists) S.config={...S.config,...d.data()}; render(); }, onErr);
+  renderAll();
+}
+init();
+</script>
