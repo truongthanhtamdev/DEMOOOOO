@@ -14,6 +14,7 @@ service cloud.firestore {
     // Điểm XP/xu và phần thưởng: chỉ quản lý được ghi.
     match /ledger/{id}  { allow read: if signedIn(); allow write: if isAdmin(); }
     match /rewards/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /sales/{id}   { allow read: if signedIn(); allow write: if isAdmin(); }
     // Mỗi người tự tạo hồ sơ của mình; quản lý đổi đội cho mọi người.
     match /players/{uid} {
       allow read: if signedIn();
@@ -24,6 +25,12 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (signedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['submissions']));
+    }
+    // Lịch hẹn: ai cũng đặt được (đứng tên mình); chỉ quản lý cập nhật kết quả.
+    match /appointments/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.by == request.auth.uid && request.resource.data.status == 'booked';
+      allow update, delete: if isAdmin();
     }
     // Nhân viên chỉ tạo yêu cầu đổi quà cho chính mình.
     match /redemptions/{id} {

@@ -38,7 +38,7 @@
     const KEY = "dtnv-demo-db", UKEY = "dtnv-demo-user";
     const now = Date.now();
     const seed = () => ({
-      config: { settings: { teams: ["Cửa hàng 1", "Cửa hàng 2", "Văn phòng"], monthTarget: 1000, admins: [] } },
+      config: { settings: { teams: ["Musics", "Tiếng Việt", "Vận hành Ads", "Coach 1:1 Ads", "Thực tập sinh"], monthTarget: 1000, admins: [] } },
       rewards: {
         r1: { name: "Voucher cà phê 50.000đ", cost: 100, stock: null },
         r2: { name: "Về sớm 2 tiếng", cost: 300, stock: null },
@@ -46,12 +46,13 @@
         r4: { name: "Thẻ quà tặng 500.000đ", cost: 1500, stock: 3 },
       },
       quests: Object.fromEntries([
-        ["m1", "Check-in đúng giờ và chào khách đúng chuẩn", "Có mặt trước giờ ca 10 phút, chào khách theo kịch bản chuẩn.", "daily", 20, 5, "daily"],
-        ["m2", "Chốt 3 đơn trong ngày", "Ghi mã 3 đơn hàng đã chốt khi nộp.", "daily", 30, 8, "daily"],
-        ["m3", "Đạt 100% chỉ tiêu doanh số tuần", "Nộp số liệu doanh số tuần từ hệ thống bán hàng.", "weekly", 150, 30, "weekly"],
-        ["m4", "Hoàn thành bài học: Quy trình xử lý khiếu nại", "Học xong và đạt từ 80% bài kiểm tra.", "learn", 50, 10, "none"],
-        ["m5", "BOSS: Xả hết hàng tồn model cũ trước cuối tháng", "Nộp danh sách đơn đã bán. Phần thưởng lớn cho người hạ Boss.", "boss", 500, 100, "none"],
-      ].map(([id, title, desc, type, xp, coins, repeat]) => [id, { title: "[Mẫu] " + title, desc, type, xp, coins, mode: "all", assignee: null, team: null, repeat, due: null, status: "active", createdAt: now, submissions: {} }])),
+        ["m1", "Kiểm tra ngân sách và tắt quảng cáo lỗ trước 10 giờ", "Nộp danh sách camp đã tắt/điều chỉnh.", "daily", 20, 5, "daily", "Vận hành Ads"],
+        ["m2", "Trả lời câu hỏi học viên trong nhóm trong 4 giờ", "Không để câu hỏi nào quá 4 giờ giờ hành chính.", "daily", 20, 5, "daily", "Coach 1:1 Ads"],
+        ["m3", "Đăng 1 video/short nhạc lên kênh", "Nộp link bài đăng.", "daily", 20, 5, "daily", "Musics"],
+        ["m4", "Chấm và phản hồi bài tập học viên trong 24 giờ", "Nộp số bài đã chấm trong ngày.", "daily", 20, 5, "daily", "Tiếng Việt"],
+        ["m5", "Test 3 mẫu content/creative mới", "Nộp link 3 mẫu và kết quả CTR/CPA sau 3 ngày.", "weekly", 150, 30, "weekly", "Vận hành Ads"],
+        ["m6", "Scale 1 chiến dịch lên x2 ngân sách mà giữ được CPA", "Nộp ảnh số liệu trước và sau khi scale.", "boss", 500, 100, "none", "Vận hành Ads"],
+      ].map(([id, title, desc, type, xp, coins, repeat, team]) => [id, { title: "[Mẫu] " + title, desc, type, xp, coins, mode: "dept", assignee: null, team, repeat, due: null, status: "active", createdAt: now, submissions: {} }])),
       ledger: {}, redemptions: {}, players: {}, accounts: {},
     });
     let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch {}
@@ -130,7 +131,7 @@
       }
       const sref = fs.doc("config/settings");
       let settings = (await sref.get()).data();
-      if (!settings) { settings = { teams: ["Cửa hàng 1"], monthTarget: 1000, admins: [fu.uid] }; await sref.set(settings); }
+      if (!settings) { settings = { teams: ["Musics", "Tiếng Việt", "Vận hành Ads", "Coach 1:1 Ads", "Thực tập sinh"], monthTarget: 1000, admins: [fu.uid] }; await sref.set(settings); }
       return { auth, fs, fu, settings };
     })();
     const mapErr = e => { throw { code: e && e.code === "permission-denied" ? "invalid_argument" : "unavailable", message: String(e && e.message) }; };
