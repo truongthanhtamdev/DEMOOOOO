@@ -46,6 +46,8 @@
         r4: { name: "Thẻ quà tặng 500.000đ", cost: 1500, stock: 3 },
       },
       quests: Object.fromEntries([
+        ["m0", "Làm và đăng 2 clip ngắn (TikTok/Reels/Shorts)", "Có hook 3 giây đầu và lời kêu gọi nhắn tin. Nộp 2 link.", "daily", 20, 5, "daily", "Thực tập sinh"],
+        ["m7", "Trả lời hết tin nhắn inbox, không để khách chờ quá 15 phút", "Nộp ảnh hộp thư cuối ca.", "daily", 20, 5, "daily", "Thực tập sinh"],
         ["m1", "Kiểm tra ngân sách và tắt quảng cáo lỗ trước 10 giờ", "Nộp danh sách camp đã tắt/điều chỉnh.", "daily", 20, 5, "daily", "Vận hành Ads"],
         ["m2", "Trả lời câu hỏi học viên trong nhóm trong 4 giờ", "Không để câu hỏi nào quá 4 giờ giờ hành chính.", "daily", 20, 5, "daily", "Coach 1:1 Ads"],
         ["m3", "Đăng 1 video/short nhạc lên kênh", "Nộp link bài đăng.", "daily", 20, 5, "daily", "OT Musics"],

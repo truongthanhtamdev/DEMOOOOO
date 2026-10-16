@@ -312,18 +312,19 @@ textarea{resize:vertical;min-height:70px}
       <div class="panel" id="ap-formwrap">
         <h2>Đặt lịch hẹn mới</h2>
         <form id="f-appt">
+          <div class="field"><label for="ap-kind">Loại lịch hẹn</label><select id="ap-kind"><option value="call">Call tư vấn với anh Tâm</option><option value="trial">Học thử lớp âm nhạc</option></select></div>
           <div class="frow">
             <div class="field"><label for="ap-name">Tên khách hàng</label><input id="ap-name" required maxlength="80" placeholder="VD: Chị Hoa, shop mỹ phẩm"></div>
             <div class="field"><label for="ap-contact">SĐT / Zalo / link Facebook</label><input id="ap-contact" maxlength="120"></div>
           </div>
           <div class="frow">
-            <div class="field"><label for="ap-time">Thời gian hẹn</label><input id="ap-time" type="datetime-local" required></div>
+            <div class="field"><label for="ap-time">Thời gian call / học thử</label><input id="ap-time" type="datetime-local" required></div>
             <div class="field"><label for="ap-product">Khách quan tâm</label><select id="ap-product"></select></div>
             <div class="field"><label for="ap-source">Nguồn khách</label>
               <select id="ap-source"><option>Facebook Ads</option><option>TikTok</option><option>Zalo</option><option>Inbox fanpage</option><option>Người quen giới thiệu</option><option>Khác</option></select></div>
           </div>
           <div class="field"><label for="ap-note">Ghi chú cho người chốt (nhu cầu, ngân sách, nỗi đau)</label><textarea id="ap-note" maxlength="600" placeholder="VD: Đang chạy ads tự học, CPA cao, ngân sách 10 triệu/tháng"></textarea></div>
-          <button class="btn primary" type="submit">Đặt hẹn · +10 XP</button>
+          <button class="btn primary" type="submit">Đặt lịch · +10 XP</button>
         </form>
       </div>
       <div class="panel">
@@ -349,6 +350,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="panel"><h2>Hợp đồng khách mới gần đây</h2><div id="sl-recent" class="list"></div></div>
     </div>
     <div class="panel" id="sl-policy"></div>
+    <div class="panel" id="sl-payroll" hidden></div>
     <div class="panel" id="sl-settings" hidden>
       <h2>Chỉ tiêu doanh số tháng (khách hàng mới)</h2>
       <form id="f-targets"><div class="frow" id="tg-fields"></div><button class="btn primary" type="submit">Lưu chỉ tiêu</button></form>
@@ -583,10 +585,16 @@ const LIBRARY = {
     ["boss","Scale 1 chiến dịch lên x2 ngân sách mà giữ được CPA","Nộp ảnh số liệu trước và sau khi scale.","none","dept"],
   ],
   "Thực tập sinh": [
-    ["daily","Đặt 3 lịch hẹn tư vấn cho anh Tâm","Đặt ở tab Lịch hẹn. Mỗi lịch hẹn còn được cộng điểm riêng khi khách đến và khi chốt.","daily","dept"],
-    ["daily","Nhắn tin chăm sóc 20 khách tiềm năng","Nộp ảnh chụp hoặc danh sách khách đã nhắn.","daily","dept"],
+    ["daily","Trả lời hết tin nhắn inbox, không để khách chờ quá 15 phút","Trong giờ làm. Nộp ảnh hộp thư cuối ca (không còn tin chưa đọc).","daily","dept"],
+    ["daily","Xin được SĐT/Zalo của 5 khách nhắn tin","Ghi tên khách và nhu cầu để chăm sóc tiếp.","daily","dept"],
+    ["daily","Làm và đăng 2 clip ngắn (TikTok/Reels/Shorts)","Đúng kịch bản đã duyệt, có hook 3 giây đầu và lời kêu gọi nhắn tin. Nộp 2 link.","daily","dept"],
+    ["daily","Đặt 3 lịch call với anh Tâm hoặc học thử lớp âm nhạc","Đặt ở tab Lịch hẹn. Mỗi lịch hẹn còn được cộng điểm và hoa hồng riêng khi khách đến và khi chốt.","daily","dept"],
+    ["weekly","Có 1 clip đạt 10.000 view trong tuần","Nộp link clip và ảnh số liệu.","weekly","dept"],
+    ["weekly","Tỷ lệ inbox thành lịch hẹn đạt 10% trong tuần","Số lịch hẹn chia cho số khách nhắn tin mới. Nộp số liệu.","weekly","dept"],
     ["weekly","Có 10 khách đến tư vấn trong tuần","Tính theo lịch hẹn được đánh dấu khách đến.","weekly","dept"],
-    ["learn","Học kịch bản đặt hẹn và luyện xử lý từ chối","Ghi âm 1 cuộc gọi tập với quản lý.","none","dept"],
+    ["learn","Học kịch bản trả lời tin nhắn và xử lý từ chối","Ghi âm 1 cuộc tập với quản lý.","none","dept"],
+    ["learn","Phân tích 3 clip viral cùng ngành và làm lại theo format","Nộp link 3 clip gốc và clip bạn làm.","none","dept"],
+    ["boss","Clip viral 100.000 view","Nộp link và ảnh số liệu. Phần thưởng lớn cho người hạ Boss.","none","dept"],
     ["boss","Lịch hẹn của bạn được chốt 5 hợp đồng trong tháng","Phần thưởng lớn cho người đặt hẹn xuất sắc nhất.","none","dept"],
   ],
   "Coach 1:1 Ads": [
@@ -601,9 +609,11 @@ const LIBRARY = {
   ],
 };
 /* Lịch hẹn: thực tập sinh đặt hẹn, anh Tâm tư vấn và chốt. Mỗi bước đạt được cộng điểm cho người đặt hẹn. */
-const APPT_REWARD = { book:{xp:10,coins:2,label:"Đặt lịch hẹn"}, show:{xp:30,coins:5,label:"Khách đến tư vấn"}, close:{xp:150,coins:50,label:"Chốt thành công"} };
+const APPT_REWARD = { book:{xp:10,coins:2,label:"Đặt lịch hẹn"}, show:{xp:30,coins:5,label:"Buổi call/học thử diễn ra"}, close:{xp:150,coins:50,label:"Chốt thành công"} };
+const APPT_CASH = { show:25000, closePct:3 };  // hoa hồng tiền cho người đặt hẹn: mỗi buổi call/học thử diễn ra + % hợp đồng chốt
+const APPT_KINDS = { call:{label:"Call tư vấn với anh Tâm", product:"Coach 1:1 Ads"}, trial:{label:"Học thử lớp âm nhạc", product:"OT Musics"} };
 const APPT_STEPS = { noshow:["book"], showed:["book","show"], closed:["book","show","close"], booked:[] };
-const APPT_STATUS = { booked:["Đã đặt hẹn","wait"], noshow:["Khách không đến","bad"], showed:["Đã tư vấn, chưa chốt","ok"], closed:["Đã chốt","ok"] };
+const APPT_STATUS = { booked:["Đã đặt hẹn","wait"], noshow:["Khách không đến","bad"], showed:["Đã diễn ra, chưa chốt","ok"], closed:["Đã chốt","ok"] };
 const CLOSER = "anh Tâm";
 
 /* Doanh số khách hàng mới theo mảng (VNĐ/tháng), đội nào góp vào mảng nào, và các mốc thưởng.
@@ -617,6 +627,25 @@ const tiers = () => S.config.tiers || DEFAULT_TIERS;
 function lineOfProduct(p){ if(targets()[p]) return p; for(const [l,ts] of Object.entries(lineTeams())) if(ts.includes(p)) return l; return Object.keys(targets())[0]; }
 function membersOf(line){ const ts=lineTeams()[line]||[]; return Object.entries(S.players).filter(([,p])=>ts.includes(p.team)).map(([id])=>id); }
 function money(v){ v=+v||0; return v>=1e9?(v/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":(v/1e6).toLocaleString("vi-VN",{maximumFractionDigits:1})+" tr"; }
+function cash(v){ v=+v||0; return v<1e6?fmt(Math.round(v/1000))+"k":money(v); }
+function commissionOf(uid,mk=monthKey()){
+  const shows=S.appts.filter(a=>a.by===uid&&(a.status==="showed"||a.status==="closed")&&monthKey(a.doneAt||a.createdAt)===mk).length;
+  const closedV=S.sales.filter(x=>x.by===uid&&x.apptId&&monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0);
+  const show=shows*APPT_CASH.show, close=closedV*APPT_CASH.closePct/100;
+  return {shows, closedV, show, close, total:show+close};
+}
+/* Bảng thưởng tiền tháng: quỹ đội của mốc cao nhất đã đạt, chia 30% đều + 70% theo XP tháng; cộng hoa hồng đặt hẹn. */
+function cashPlan(){
+  const rows={}, row=id=>rows[id]??={id,team:S.players[id]?.team||"",xp:stats(id).xpMonth,fund:0,comm:0};
+  for(const [line,t] of Object.entries(targets())){
+    const act=lineTotal(line), pct=t?act/t*100:0, hit=tiers().filter(x=>pct>=x.pct);
+    const mem=membersOf(line); if(!hit.length||!mem.length) continue;
+    const fund=act*hit[hit.length-1].fund/100, xs=mem.map(id=>Math.max(0,stats(id).xpMonth)), sx=xs.reduce((a,b)=>a+b,0);
+    mem.forEach((id,i)=>{ row(id).fund+=fund*0.3/mem.length+(sx?fund*0.7*xs[i]/sx:fund*0.7/mem.length); });
+  }
+  for(const id of new Set(S.appts.map(a=>a.by))){ const c=commissionOf(id).total; if(c) row(id).comm+=c; }
+  return Object.values(rows).map(r=>({...r,total:r.fund+r.comm})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
+}
 function lineTotal(line,mk=monthKey()){ return S.sales.filter(x=>x.line===line&&monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0); }
 const PRESETS = [
   {label:"Thưởng nóng: khách hàng khen", xp:50, coins:20},
@@ -785,8 +814,8 @@ function confetti(n,x,y){
 function apWhen(t){ if(!t) return ""; const [d,h]=t.split("T"); const [y,m,dd]=d.split("-"); return `${h||""} · ${dd}/${m}`; }
 function renderAppts(){
   const R=APPT_REWARD;
-  $("#ap-legend").textContent=`+${R.book.xp} XP đặt hẹn · +${R.show.xp} XP khách đến · +${R.close.xp} XP & ${R.close.coins} xu khi ${CLOSER} chốt`;
-  setOptions($("#ap-product"),Object.keys(LIBRARY).map(k=>`<option>${esc(k)}</option>`).join("")+`<option>Khác</option>`);
+  $("#ap-legend").textContent=`+${R.book.xp} XP đặt hẹn · +${R.show.xp} XP và ${cash(APPT_CASH.show)} mỗi buổi call/học thử diễn ra · +${R.close.xp} XP và ${APPT_CASH.closePct}% hợp đồng khi ${CLOSER} chốt`;
+  setOptions($("#ap-product"),Object.keys(LIBRARY).filter(k=>k!=="Thực tập sinh").map(k=>`<option>${esc(k)}</option>`).join("")+`<option>Khác</option>`);
   if(!$("#ap-product").dataset.init){ $("#ap-product").value="Coach 1:1 Ads"; $("#ap-product").dataset.init="1"; }
   const mk=monthKey(), mine=S.appts.filter(a=>S.isMgr||a.by===S.myId);
   const scope=S.isMgr?S.appts:S.appts.filter(a=>a.by===S.myId);
@@ -795,14 +824,15 @@ function renderAppts(){
   $("#ap-tiles").innerHTML=`<div class="tile g"><b class="num">${m.length}</b><span>${S.isMgr?"Lịch hẹn cả đội":"Hẹn bạn đặt"} tháng này</span></div>
     <div class="tile x"><b class="num">${settled?Math.round(showed/settled*100):0}%</b><span>Tỷ lệ khách đến</span></div>
     <div class="tile r"><b class="num">${closed}</b><span>Đã chốt</span></div>
-    <div class="tile f"><b class="num">${showed?Math.round(closed/showed*100):0}%</b><span>Tỷ lệ chốt</span></div>`;
+    <div class="tile f"><b class="num">${showed?Math.round(closed/showed*100):0}%</b><span>Tỷ lệ chốt</span></div>`
+    +(S.isMgr?"":(()=>{const c=commissionOf(S.myId);return `<div class="tile g" style="grid-column:1/-1"><b class="num">${cash(c.total)}</b><span>Hoa hồng dự kiến tháng này · ${c.shows} buổi call/học thử × ${cash(APPT_CASH.show)} + ${APPT_CASH.closePct}% của ${money(c.closedV)} đã chốt</span></div>`;})());
   $("#ap-formwrap").hidden=!(S.myId&&S.players[S.myId]&&S.canWrite!==false);
   // leaderboard of setters this month
   const by={};
   for(const a of S.appts){ if(monthKey(a.createdAt)!==mk) continue; const r=by[a.by]??={id:a.by,n:0,sh:0,cl:0}; r.n++; if(a.status==="showed"||a.status==="closed") r.sh++; if(a.status==="closed") r.cl++; }
   const rows=Object.values(by).sort((a,b)=>b.cl-a.cl||b.sh-a.sh||b.n-a.n);
   $("#ap-board").innerHTML=rows.length?rows.map((r,i)=>`<div class="item ${r.id===S.myId?"me":""}"><div class="who"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span>${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div>
-    <span class="funnel"><span title="Đặt hẹn">${r.n} hẹn</span>›<span class="pos" title="Khách đến">${r.sh} đến</span>›<b style="color:var(--gold)" title="Chốt">${r.cl} chốt</b></span></div>`).join(""):`<p class="muted small">Chưa có lịch hẹn nào tháng này. Ai đặt hẹn đầu tiên sẽ đứng top!</p>`;
+    <span class="funnel"><span title="Đặt hẹn">${r.n} hẹn</span>›<span class="pos" title="Khách đến">${r.sh} đến</span>›<b style="color:var(--gold)" title="Chốt">${r.cl} chốt</b>${S.isMgr||r.id===S.myId?` · <span title="Hoa hồng dự kiến">${cash(commissionOf(r.id).total)}</span>`:""}</span></div>`).join(""):`<p class="muted small">Chưa có lịch hẹn nào tháng này. Ai đặt hẹn đầu tiên sẽ đứng top!</p>`;
   // list
   document.querySelectorAll("#apfilter button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.f===S.apF));
   $("#ap-list-title").textContent=S.isMgr?"Lịch hẹn của cả đội":"Lịch hẹn bạn đã đặt";
@@ -813,9 +843,9 @@ function renderAppts(){
   $("#ap-list").innerHTML=list.length?list.map(a=>{
     const late=a.status==="booked"&&a.time&&a.time<nowS;
     const [lbl,cls]=APPT_STATUS[a.status]||APPT_STATUS.booked;
-    const acts=S.isMgr?`<div class="acts">${["noshow","showed","closed"].map(to=>`<button class="btn sm ${to==="closed"?"good":to==="noshow"?"danger":"ghost"}" data-act="appt" data-to="${to}" data-id="${esc(a.id)}" ${a.status===to?"disabled":""}>${to==="noshow"?"Không đến":to==="showed"?"Đã tư vấn":"Chốt!"}</button>`).join("")}</div>`:"";
+    const acts=S.isMgr?`<div class="acts">${["noshow","showed","closed"].map(to=>`<button class="btn sm ${to==="closed"?"good":to==="noshow"?"danger":"ghost"}" data-act="appt" data-to="${to}" data-id="${esc(a.id)}" ${a.status===to?"disabled":""}>${to==="noshow"?"Không đến":to==="showed"?(a.kind==="trial"?"Đã học thử":"Đã call"):"Chốt!"}</button>`).join("")}</div>`:"";
     return `<div class="item"><div class="l"><span class="ap-when ${late?"late":""}">${esc(apWhen(a.time))}${late?" · cần cập nhật":""}</span>
-      <div><b>${esc(a.customer)}</b> <span class="chip">${esc(a.product||"")}</span> <span class="chip ${cls}">${esc(lbl)}</span></div>
+      <div><b>${esc(a.customer)}</b> <span class="chip ${a.kind==="trial"?"learn":"task"}">${a.kind==="trial"?"Học thử nhạc":"Call"}</span> <span class="chip">${esc(a.product||"")}</span> <span class="chip ${cls}">${esc(lbl)}</span></div>
       <div class="muted small">${S.isMgr?`Người đặt: <b>${esc(nameOf(a.by))}</b> · `:""}${esc(a.source||"")}${a.contact?` · ${esc(a.contact)}`:""}</div>
       ${a.note?`<div class="muted small">“${esc(a.note)}”</div>`:""}</div>${acts}</div>`;
   }).join(""):`<p class="muted small">${S.apF==="upcoming"?"Không có lịch hẹn nào đang chờ.":"Chưa có lịch hẹn nào được xử lý."}</p>`;
@@ -858,8 +888,16 @@ function renderSales(){
   $("#sl-policy").innerHTML=`<h2>Chính sách thưởng khi đạt doanh số</h2>
     <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng đội (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
     ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% doanh số khách mới của mảng</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ đội chia 70% theo XP tháng, 30% chia đều. Thực tập sinh: 30.000đ mỗi khách đến tư vấn và 3% hợp đồng chốt từ lịch hẹn của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ đội chia 70% theo XP tháng, 30% chia đều. Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+  $("#sl-payroll").hidden=!S.isMgr;
   if(S.isMgr){
+    const plan=cashPlan(), tot=plan.reduce((a,r)=>a+r.total,0);
+    $("#sl-payroll").innerHTML=`<div class="section-head"><h2>Bảng thưởng tiền tháng ${d.getMonth()+1} (dự kiến)</h2><button class="btn ghost sm" data-act="copy-payroll">Sao chép bảng để dán vào Excel</button></div>
+      ${plan.length?`<div class="tablewrap"><table><thead><tr><th>Nhân viên</th><th>Đội</th><th class="r">XP tháng</th><th class="r">Thưởng đội</th><th class="r">Hoa hồng hẹn</th><th class="r">Tổng</th></tr></thead><tbody>
+      ${plan.map(r=>`<tr><td><div class="who">${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div></td><td>${esc(r.team)}</td><td class="r num">${fmt(r.xp)}</td><td class="r num">${cash(r.fund)}</td><td class="r num">${cash(r.comm)}</td><td class="r num"><b style="color:var(--gold)">${cash(r.total)}</b></td></tr>`).join("")}
+      <tr><td colspan="5"><b>Tổng chi thưởng</b> · ${sumA?((tot/sumA)*100).toLocaleString("vi-VN",{maximumFractionDigits:1}):0}% doanh số</td><td class="r num"><b style="color:var(--gold)">${cash(tot)}</b></td></tr></tbody></table></div>`
+      :`<p class="muted small">Chưa có ai đủ điều kiện nhận thưởng tiền tháng này. Thưởng đội bắt đầu khi mảng đạt 80% chỉ tiêu; hoa hồng đặt hẹn tính khi khách đến.</p>`}
+      <p class="muted small">Số liệu tạm tính theo doanh số đã ghi nhận. Chốt bảng sau khi đối soát tiền đã thu và hoàn tiền.</p>`;
     const html=Object.entries(T).map(([l,v])=>`<div class="field"><label for="tg-${hash(l)}">${esc(l)} (triệu)</label><input id="tg-${hash(l)}" data-line="${esc(l)}" type="number" min="1" step="1" value="${Math.round(v/1e6)}"></div>`).join("");
     const box=$("#tg-fields"); if(box.dataset.h!==html&&!box.contains(document.activeElement)){ box.innerHTML=html; box.dataset.h=html; }
   }
@@ -1148,6 +1186,11 @@ document.addEventListener("click", async ev=>{
     case "close-modal": closeModal(); break;
     case "close-lvl": $("#lvlup").hidden=true; break;
     case "open-sale": openSale(); break;
+    case "copy-payroll": {
+      const tsv=["Nhân viên\tĐội\tXP tháng\tThưởng đội (đ)\tHoa hồng hẹn (đ)\tTổng (đ)",...cashPlan().map(r=>[nameOf(r.id),r.team,r.xp,Math.round(r.fund),Math.round(r.comm),Math.round(r.total)].join("\t"))].join("\n");
+      navigator.clipboard.writeText(tsv).then(()=>toast("Đã sao chép. Mở Excel/Google Sheets và dán (Ctrl+V)."),()=>toast("Không sao chép được trên trình duyệt này. Hãy bôi đen bảng để copy."));
+      break;
+    }
     case "close-sale": $("#salemodal").hidden=true; S.saleCtx=null; break;
     case "sale-del": await run(()=>db.doc("sales/"+id).delete(),"Đã xoá doanh số"); break;
     case "appt": {
@@ -1226,6 +1269,7 @@ document.addEventListener("change", e=>{
   if(e.target.id==="q-tpl") applyTemplate();
   if(e.target.id==="q-mode") modeChanged();
   if(e.target.id==="a-preset") applyPreset();
+  if(e.target.id==="ap-kind") $("#ap-product").value=APPT_KINDS[e.target.value].product;
   if(e.target.id==="s-target") e.target.dataset.touched="1";
   if(e.target.dataset.act==="player-team") run(()=>S.db.doc("players/"+e.target.dataset.id).update({team:e.target.value}),"Đã đổi đội");
 });
@@ -1265,7 +1309,7 @@ $("#f-targets").addEventListener("submit", async e=>{
 });
 $("#f-appt").addEventListener("submit", async e=>{
   e.preventDefault();
-  const a={by:S.myId, customer:$("#ap-name").value.trim(), contact:$("#ap-contact").value.trim(), time:$("#ap-time").value,
+  const a={by:S.myId, kind:$("#ap-kind").value, customer:$("#ap-name").value.trim(), contact:$("#ap-contact").value.trim(), time:$("#ap-time").value,
     product:$("#ap-product").value, source:$("#ap-source").value, note:$("#ap-note").value.trim(), status:"booked", createdAt:Date.now()};
   if(!a.customer||!a.time) return;
   await run(()=>S.db.collection("appointments").add(a),`Đã đặt hẹn cho ${CLOSER}. Khách đến là +${APPT_REWARD.show.xp} XP!`);
