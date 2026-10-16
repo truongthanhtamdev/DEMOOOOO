@@ -599,7 +599,7 @@ const CLOSER = "anh Tâm";
    fund = % doanh số trích quỹ thưởng tiền cho đội khi đạt mốc; xp/coins = thưởng trong game cho từng thành viên. */
 const DEFAULT_TARGETS = { "OT Musics":400e6, "OT Media":400e6, "Tiếng Việt":210e6 };
 const DEFAULT_LINE_TEAMS = { "OT Musics":["OT Musics"], "OT Media":["Vận hành Ads","Coach 1:1 Ads","Thực tập sinh"], "Tiếng Việt":["Tiếng Việt"] };
-const DEFAULT_TIERS = [ {pct:80,fund:1,xp:200,coins:50}, {pct:100,fund:2,xp:500,coins:150}, {pct:120,fund:3,xp:1000,coins:300} ];
+const DEFAULT_TIERS = [ {pct:80,fund:2,xp:200,coins:50}, {pct:100,fund:3,xp:500,coins:150}, {pct:120,fund:4,xp:1000,coins:300} ];
 const targets = () => S.config.targets || DEFAULT_TARGETS;
 const lineTeams = () => S.config.lineTeams || DEFAULT_LINE_TEAMS;
 const tiers = () => S.config.tiers || DEFAULT_TIERS;
@@ -847,7 +847,7 @@ function renderSales(){
   $("#sl-policy").innerHTML=`<h2>Chính sách thưởng khi đạt doanh số</h2>
     <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng đội (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
     ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% doanh số khách mới của mảng</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted small">Quỹ thưởng chia cho thành viên theo điểm XP tháng trong đội. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ đội chia 70% theo XP tháng, 30% chia đều. Thực tập sinh: 30.000đ mỗi khách đến tư vấn và 3% hợp đồng chốt từ lịch hẹn của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
   if(S.isMgr){
     const html=Object.entries(T).map(([l,v])=>`<div class="field"><label for="tg-${hash(l)}">${esc(l)} (triệu)</label><input id="tg-${hash(l)}" data-line="${esc(l)}" type="number" min="1" step="1" value="${Math.round(v/1e6)}"></div>`).join("");
     const box=$("#tg-fields"); if(box.dataset.h!==html&&!box.contains(document.activeElement)){ box.innerHTML=html; box.dataset.h=html; }
