@@ -541,7 +541,7 @@ const BADGES = [
 /* Thư viện nhiệm vụ mẫu theo mảng: [loại, tên, mô tả, lặp lại, kiểu giao]
    kiểu giao: "dept" = từng người trong đội tự làm, "team" = cả đội cùng làm và cùng nhận thưởng */
 const LIBRARY = {
-  "Musics": [
+  "OT Musics": [
     ["daily","Đăng 1 video/short nhạc lên kênh","Đúng lịch đăng, có tiêu đề, hashtag và thumbnail chuẩn. Nộp link bài đăng.","daily","dept"],
     ["daily","Trả lời bình luận và tin nhắn của fan trong ngày","Không để tin nhắn quá 24 giờ chưa trả lời.","daily","dept"],
     ["weekly","Hoàn thành bản mix/master đúng hạn","Nộp link file và ghi chú các chỉnh sửa chính.","weekly","dept"],
@@ -597,8 +597,8 @@ const CLOSER = "anh Tâm";
 
 /* Doanh số khách hàng mới theo mảng (VNĐ/tháng), đội nào góp vào mảng nào, và các mốc thưởng.
    fund = % doanh số trích quỹ thưởng tiền cho đội khi đạt mốc; xp/coins = thưởng trong game cho từng thành viên. */
-const DEFAULT_TARGETS = { "Musics":400e6, "Em Tâm Làm Ads":400e6, "Tiếng Việt":210e6 };
-const DEFAULT_LINE_TEAMS = { "Musics":["Musics"], "Em Tâm Làm Ads":["Vận hành Ads","Coach 1:1 Ads","Thực tập sinh"], "Tiếng Việt":["Tiếng Việt"] };
+const DEFAULT_TARGETS = { "OT Musics":400e6, "OT Media":400e6, "Tiếng Việt":210e6 };
+const DEFAULT_LINE_TEAMS = { "OT Musics":["OT Musics"], "OT Media":["Vận hành Ads","Coach 1:1 Ads","Thực tập sinh"], "Tiếng Việt":["Tiếng Việt"] };
 const DEFAULT_TIERS = [ {pct:80,fund:1,xp:200,coins:50}, {pct:100,fund:2,xp:500,coins:150}, {pct:120,fund:3,xp:1000,coins:300} ];
 const targets = () => S.config.targets || DEFAULT_TARGETS;
 const lineTeams = () => S.config.lineTeams || DEFAULT_LINE_TEAMS;
