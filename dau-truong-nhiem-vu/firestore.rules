@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function settings() { return get(/databases/$(database)/documents/config/settings).data; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/config/settings) && request.auth.uid in settings().admins; }
+
+    // Người đăng nhập đầu tiên tạo cài đặt và trở thành quản lý.
+    match /config/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.admins == [request.auth.uid];
+      allow update, delete: if isAdmin();
+    }
+    // Điểm XP/xu và phần thưởng: chỉ quản lý được ghi.
+    match /ledger/{id}  { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /rewards/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    // Mỗi người tự tạo hồ sơ của mình; quản lý đổi đội cho mọi người.
+    match /players/{uid} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+    // Nhân viên chỉ được ghi phần "submissions" (nộp nhiệm vụ).
+    match /quests/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['submissions']));
+    }
+    // Nhân viên chỉ tạo yêu cầu đổi quà cho chính mình.
+    match /redemptions/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
+      allow update, delete: if isAdmin();
+    }
+  }
+}
