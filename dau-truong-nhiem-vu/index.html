@@ -347,7 +347,7 @@ textarea{resize:vertical;min-height:70px}
   <section class="section" data-view="sales" hidden>
     <div class="section-head"><h2 id="sl-title">Boss doanh số tháng</h2>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="muted small" id="sl-days"></span><button class="btn primary sm" data-act="open-sale" id="sl-add" hidden>Ghi nhận doanh số</button></div></div>
-    <div class="total-card" id="sl-total"></div>
+    <div id="sl-total"></div>
     <div class="bossgrid" id="sl-bosses"></div>
     <div class="cols">
       <div class="panel"><h2>Người mang về doanh số</h2><div id="sl-people" class="list"></div></div>
@@ -367,7 +367,7 @@ textarea{resize:vertical;min-height:70px}
       <h2>Bảng xếp hạng</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <div class="seg" id="lbperiod"><button data-p="month" aria-pressed="true">Tháng này</button><button data-p="all" aria-pressed="false">Toàn thời gian</button></div>
-        <div class="seg" id="lbmode"><button data-m="person" aria-pressed="true">Cá nhân</button><button data-m="team" aria-pressed="false">Đội / Cửa hàng</button></div>
+        <div class="seg" id="lbmode"><button data-m="person" aria-pressed="true">Cá nhân</button><button data-m="team" aria-pressed="false">Theo vai trò</button></div>
       </div>
     </div>
     <div id="podium" class="podium"></div>
@@ -421,9 +421,10 @@ textarea{resize:vertical;min-height:70px}
           </div>
           <div class="frow">
             <div class="field"><label for="q-mode">Giao cho</label>
-              <select id="q-mode"><option value="all">Tất cả nhân viên</option><option value="dept">Từng người trong một đội</option><option value="team">Cả đội cùng làm</option><option value="person">Một người</option></select></div>
+              <select id="q-mode"><option value="all">Mọi người (ai làm người đó nhận)</option><option value="company">Cả công ty cùng làm (cùng nhận thưởng)</option><option value="dept">Một vai trò (Quản lý / Thực tập sinh)</option><option value="person">Một người</option></select></div>
             <div class="field" id="q-assignee-wrap" hidden><label for="q-assignee">Nhân viên</label><select id="q-assignee"></select></div>
-            <div class="field" id="q-team-wrap" hidden><label for="q-team">Đội</label><select id="q-team"></select></div>
+            <div class="field" id="q-team-wrap" hidden><label for="q-team">Vai trò</label><select id="q-team"></select></div>
+            <div class="field"><label for="q-area">Mảng</label><select id="q-area"></select></div>
           </div>
           <div class="frow">
             <div class="field"><label for="q-repeat">Lặp lại</label>
@@ -471,7 +472,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="panel">
         <h2>Nhân viên &amp; cài đặt</h2>
         <form id="f-settings">
-          <div class="field"><label for="s-teams">Danh sách đội / mảng kinh doanh (mỗi dòng một tên)</label><textarea id="s-teams"></textarea></div>
+          <div class="field"><label for="s-teams">Vai trò trong công ty (mỗi dòng một tên)</label><textarea id="s-teams"></textarea></div>
           <div class="field"><label for="s-target">Chỉ tiêu XP mỗi tháng (dùng để xếp loại A/B/C/D)</label><input id="s-target" type="number" min="1" required></div>
           <button class="btn primary" type="submit">Lưu cài đặt</button>
         </form>
@@ -640,7 +641,12 @@ const CLOSER = "anh Tâm";
 const DEFAULT_TARGETS = { "OT Musics":400e6, "OT Media":400e6, "Tiếng Việt":210e6 };
 const DEFAULT_LINE_TEAMS = { "OT Musics":["OT Musics"], "OT Media":["Vận hành Ads","Coach 1:1 Ads","Thực tập sinh"], "Tiếng Việt":["Tiếng Việt"] };
 const DEFAULT_TIERS = [ {pct:80,fund:2,xp:200,coins:50}, {pct:100,fund:3,xp:500,coins:150}, {pct:120,fund:4,xp:1000,coins:300} ];
+const ROLES = ["CEO","Quản lý","Thực tập sinh"];  // công ty dùng vai trò thay cho đội
 const targets = () => S.config.targets || DEFAULT_TARGETS;
+const companyTarget = () => Object.values(targets()).reduce((a,v)=>a+(+v||0),0);
+const companyTotal = (mk=monthKey()) => S.sales.filter(x=>monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0);
+/* Quỹ thưởng chung chia cho mọi người trừ CEO. */
+const fundMembers = () => Object.entries(S.players).filter(([,p])=>p.team!=="CEO").map(([id])=>id);
 const lineTeams = () => S.config.lineTeams || DEFAULT_LINE_TEAMS;
 const tiers = () => S.config.tiers || DEFAULT_TIERS;
 function lineOfProduct(p){ if(targets()[p]) return p; for(const [l,ts] of Object.entries(lineTeams())) if(ts.includes(p)) return l; return Object.keys(targets())[0]; }
@@ -656,12 +662,11 @@ function commissionOf(uid,mk=monthKey()){
 /* Bảng thưởng tiền tháng: quỹ đội của mốc cao nhất đã đạt, chia 30% đều + 70% theo XP tháng; cộng hoa hồng đặt hẹn. */
 function cashPlan(){
   const rows={}, row=id=>rows[id]??={id,team:S.players[id]?.team||"",xp:stats(id).xpMonth,fund:0,comm:0};
-  for(const [line,t] of Object.entries(targets())){
-    const act=lineTotal(line), pct=t?act/t*100:0, hit=tiers().filter(x=>pct>=x.pct);
-    const mem=membersOf(line); if(!hit.length||!mem.length) continue;
-    const fund=act*hit[hit.length-1].fund/100, xs=mem.map(id=>Math.max(0,stats(id).xpMonth)), sx=xs.reduce((a,b)=>a+b,0);
-    mem.forEach((id,i)=>{ row(id).fund+=fund*0.3/mem.length+(sx?fund*0.7*xs[i]/sx:fund*0.7/mem.length); });
-  }
+  { const t=companyTarget(), act=companyTotal(), pct=t?act/t*100:0, hit=tiers().filter(x=>pct>=x.pct), mem=fundMembers();
+    if(hit.length&&mem.length){
+      const fund=act*hit[hit.length-1].fund/100, xs=mem.map(id=>Math.max(0,stats(id).xpMonth)), sx=xs.reduce((a,b)=>a+b,0);
+      mem.forEach((id,i)=>{ row(id).fund+=fund*0.3/mem.length+(sx?fund*0.7*xs[i]/sx:fund*0.7/mem.length); });
+    } }
   for(const id of new Set(S.appts.map(a=>a.by))){ const c=commissionOf(id).total; if(c) row(id).comm+=c; }
   return Object.values(rows).map(r=>({...r,total:r.fund+r.comm})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
 }
@@ -677,7 +682,7 @@ const PRESETS = [
 
 const S = {
   db:null, user:null, myId:null, isMgr:false, canWrite:null, ready:false,
-  quests:[], ledger:[], appts:[], apF:"upcoming", sales:[], saleCtx:null, rewards:[], redemptions:[], players:{}, config:{teams:Object.keys(LIBRARY), monthTarget:1000},
+  quests:[], ledger:[], appts:[], apF:"upcoming", sales:[], saleCtx:null, rewards:[], redemptions:[], players:{}, config:{teams:ROLES, monthTarget:1000},
   profiles:{}, tab:"quests", qf:"todo", qTeam:"all", lbPeriod:"month", lbMode:"person",
   submitting:null, confirmRedeem:null, rejecting:{},
 };
@@ -704,7 +709,7 @@ const ICON = {
 };
 
 function periodOf(q){return q.repeat==="daily"?dayKey():q.repeat==="weekly"?weekKey():"once";}
-function subjectOf(q,uid){return q.mode==="team" ? "team:"+(q.team||"") : uid;}
+function subjectOf(q,uid){return q.mode==="company" ? "company" : q.mode==="team" ? "team:"+(q.team||"") : uid;}
 function subKey(q,uid){return subjectOf(q,uid)+"|"+periodOf(q);}
 function nameOf(id){const p=S.profiles[id];return (p&&p.name)||S.players[id]?.name||(id===S.myId?"Bạn":"Nhân viên");}
 function avatarOf(id){const p=S.profiles[id];return p?p.avatarUrl:"";}
@@ -878,26 +883,26 @@ function renderSales(){
   $("#sl-days").textContent=`Còn ${left} ngày`;
   $("#sl-add").hidden=!S.isMgr; $("#sl-settings").hidden=!S.isMgr;
   const T=targets(), TI=tiers();
-  let sumT=0,sumA=0,sumFund=0;
-  $("#sl-bosses").innerHTML=Object.entries(T).map(([line,target])=>{
-    const act=lineTotal(line), pct=target?act/target*100:0, need=Math.max(0,target-act);
-    const hit=TI.filter(t=>pct>=t.pct), top=hit[hit.length-1], fund=top?act*top.fund/100:0;
-    sumT+=target; sumA+=act; sumFund+=fund;
-    const w=Math.min(100,pct/1.2);
-    return `<div class="boss-card ${pct>=100?"dead":""}">
-      <div class="boss-top"><span class="boss-ico">${pct>=100?TROPHY:QICON.boss}</span><div style="min-width:0"><span class="rarity" style="color:${pct>=100?"var(--xp)":"var(--legend)"}">${pct>=100?"Đã hạ Boss":"Boss tháng"}</span><div class="boss-name">${esc(line)}</div></div>
-        <span class="grade ${pct>=100?"A":pct>=80?"B":pct>=60?"C":"D"}" style="margin-left:auto;font-size:1.4rem">${Math.floor(pct)}%</span></div>
-      <div class="hp"><i style="width:${w}%"></i>${TI.map(t=>`<span class="mk ${pct>=t.pct?"hit":""}" style="left:${t.pct/1.2}%" title="Mốc ${t.pct}%"></span>`).join("")}<b>${money(act)} / ${money(target)}</b></div>
-      <div class="boss-stats"><span>${need?`Còn thiếu <b>${money(need)}</b>`:"Đã vượt chỉ tiêu"}</span><span>${need?`Cần <b>${money(need/left)}</b>/ngày`:`Vượt <b>${money(act-target)}</b>`}</span></div>
-      <div class="tierrow">${TI.map(t=>`<span class="tier ${pct>=t.pct?"hit":""}">${t.pct}%: quỹ ${t.fund}% · +${t.xp} XP</span>`).join("")}</div>
-      <div class="muted small">Quỹ thưởng đội hiện tại: <b style="color:var(--gold)">${money(fund)}</b> · ${esc((lineTeams()[line]||[]).join(", "))}</div>
+  let sumT,sumA,sumFund;
+  sumT=companyTarget(); sumA=companyTotal();
+  const pct=sumT?sumA/sumT*100:0, need=Math.max(0,sumT-sumA), hitT=TI.filter(t=>pct>=t.pct), topT=hitT[hitT.length-1];
+  sumFund=topT?sumA*topT.fund/100:0;
+  const nextT=TI.find(t=>pct<t.pct);
+  $("#sl-total").innerHTML=`<div class="boss-card ${pct>=100?"dead":""}" style="border-width:2px">
+      <div class="boss-top"><span class="boss-ico">${pct>=100?TROPHY:QICON.boss}</span><div style="min-width:0"><span class="rarity" style="color:${pct>=100?"var(--xp)":"var(--legend)"}">${pct>=100?"Đã hạ Boss công ty":"Boss công ty · cả team cùng đánh"}</span><div class="boss-name" style="font-size:1.25rem">Doanh số khách mới toàn công ty</div></div>
+        <span class="grade ${pct>=100?"A":pct>=80?"B":pct>=60?"C":"D"}" style="margin-left:auto">${Math.floor(pct)}%</span></div>
+      <div class="hp" style="height:30px"><i style="width:${Math.min(100,pct/1.2)}%"></i>${TI.map(t=>`<span class="mk ${pct>=t.pct?"hit":""}" style="left:${t.pct/1.2}%" title="Mốc ${t.pct}%"></span>`).join("")}<b>${money(sumA)} / ${money(sumT)}</b></div>
+      <div class="boss-stats"><span>${need?`Còn thiếu <b>${money(need)}</b> · cần <b>${money(need/left)}</b>/ngày`:`Đã vượt <b>${money(sumA-sumT)}</b>`}</span><span>${nextT?`Mốc kế tiếp ${nextT.pct}%: còn <b>${money(Math.max(0,sumT*nextT.pct/100-sumA))}</b>`:"Đã đạt mốc cao nhất"}</span></div>
+      <div class="tierrow">${TI.map(t=>`<span class="tier ${pct>=t.pct?"hit":""}">${t.pct}%: quỹ ${t.fund}% · +${t.xp} XP mỗi người</span>`).join("")}</div>
+      <div class="muted small">Quỹ thưởng chung hiện tại: <b style="color:var(--gold)">${money(sumFund)}</b> · chia cho ${fundMembers().length} người (trừ CEO)</div>
     </div>`;
+  $("#sl-bosses").innerHTML=Object.entries(T).map(([line,target])=>{
+    const act=lineTotal(line), lp=target?act/target*100:0, share=sumA?act/sumA*100:0;
+    return `<div class="panel" style="gap:8px"><div class="section-head"><span class="rankname">Đóng góp · ${Math.round(share)}% doanh số</span><span class="num small">${Math.floor(lp)}%</span></div>
+      <div class="boss-name">${esc(line)}</div>
+      <div class="xpbar" style="height:10px"><i style="width:${Math.min(100,lp)}%;background:linear-gradient(90deg,var(--gold-deep),var(--gold))"></i></div>
+      <div class="boss-stats"><span><b>${money(act)}</b> / ${money(target)}</span><span>${act>=target?"Đã đạt":`Còn ${money(target-act)}`}</span></div></div>`;
   }).join("");
-  const tp=sumT?sumA/sumT*100:0;
-  $("#sl-total").innerHTML=`<div class="section-head"><span class="rankname">Toàn công ty · khách hàng mới</span><span class="num muted small">${Math.floor(tp)}%</span></div>
-    <span class="big num">${money(sumA)} <span class="muted" style="font-size:1rem">/ ${money(sumT)}</span></span>
-    <div class="xpbar" style="height:12px"><i style="width:${Math.min(100,tp)}%;background:linear-gradient(90deg,var(--gold-deep),var(--gold))"></i></div>
-    <span class="muted small">Tổng quỹ thưởng đang mở: <b style="color:var(--gold)">${money(sumFund)}</b></span>`;
   const by={}; for(const x of S.sales){ if(monthKey(x.at)!==mk||!x.by) continue; const r=by[x.by]??={id:x.by,v:0,n:0}; r.v+=+x.amount||0; r.n++; }
   const ppl=Object.values(by).sort((a,b)=>b.v-a.v);
   $("#sl-people").innerHTML=ppl.length?ppl.map((r,i)=>`<div class="item"><div class="who"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span>${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div><span class="num"><b style="color:var(--gold)">${money(r.v)}</b> · ${r.n} HĐ</span></div>`).join(""):`<p class="muted small">Chưa có doanh số nào được ghi công tháng này.</p>`;
@@ -905,14 +910,14 @@ function renderSales(){
   $("#sl-recent").innerHTML=rec.length?rec.map(x=>`<div class="item"><div class="l"><b>${esc(x.customer)}</b> <span class="chip">${esc(x.line)}</span><div class="muted small">${dateVN(x.at)}${x.by?` · ${esc(nameOf(x.by))}`:""}</div></div>
     <div class="acts"><b class="num" style="color:var(--gold)">${money(x.amount)}</b>${S.isMgr?`<button class="btn ghost sm" data-act="sale-del" data-id="${esc(x.id)}">Xoá</button>`:""}</div></div>`).join(""):`<p class="muted small">Chưa có hợp đồng khách mới nào tháng này.</p>`;
   $("#sl-policy").innerHTML=`<h2>Chính sách thưởng khi đạt doanh số</h2>
-    <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng đội (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
-    ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% doanh số khách mới của mảng</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ đội chia 70% theo XP tháng, 30% chia đều. Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+    <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng chung (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
+    ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% tổng doanh số khách mới công ty</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ chung chia cho mọi người trừ CEO: 70% theo XP tháng, 30% chia đều. Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
   $("#sl-payroll").hidden=!S.isMgr;
   if(S.isMgr){
     const plan=cashPlan(), tot=plan.reduce((a,r)=>a+r.total,0);
     $("#sl-payroll").innerHTML=`<div class="section-head"><h2>Bảng thưởng tiền tháng ${d.getMonth()+1} (dự kiến)</h2><button class="btn ghost sm" data-act="copy-payroll">Sao chép bảng để dán vào Excel</button></div>
-      ${plan.length?`<div class="tablewrap"><table><thead><tr><th>Nhân viên</th><th>Đội</th><th class="r">XP tháng</th><th class="r">Thưởng đội</th><th class="r">Hoa hồng hẹn</th><th class="r">Tổng</th></tr></thead><tbody>
+      ${plan.length?`<div class="tablewrap"><table><thead><tr><th>Nhân viên</th><th>Vai trò</th><th class="r">XP tháng</th><th class="r">Quỹ chung</th><th class="r">Hoa hồng hẹn</th><th class="r">Tổng</th></tr></thead><tbody>
       ${plan.map(r=>`<tr><td><div class="who">${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div></td><td>${esc(r.team)}</td><td class="r num">${fmt(r.xp)}</td><td class="r num">${cash(r.fund)}</td><td class="r num">${cash(r.comm)}</td><td class="r num"><b style="color:var(--gold)">${cash(r.total)}</b></td></tr>`).join("")}
       <tr><td colspan="5"><b>Tổng chi thưởng</b> · ${sumA?((tot/sumA)*100).toLocaleString("vi-VN",{maximumFractionDigits:1}):0}% doanh số</td><td class="r num"><b style="color:var(--gold)">${cash(tot)}</b></td></tr></tbody></table></div>`
       :`<p class="muted small">Chưa có ai đủ điều kiện nhận thưởng tiền tháng này. Thưởng đội bắt đầu khi mảng đạt 80% chỉ tiêu; hoa hồng đặt hẹn tính khi khách đến.</p>`}
@@ -931,20 +936,20 @@ function openSale(ctx){
   $("#salemodal").hidden=false; $("#sl-amount").focus();
 }
 async function recordSale(sale){
-  const mk=monthKey(sale.at), line=sale.line, target=targets()[line]||0;
-  const before=lineTotal(line,mk), after=before+sale.amount;
+  const mk=monthKey(sale.at), target=companyTarget();
+  const before=companyTotal(mk), after=before+sale.amount;
   await S.db.collection("sales").add(sale);
   const newly=[];
   for(const t of tiers()){
     if(!target||after/target*100<t.pct) continue;
     if(before/target*100<t.pct) newly.push(t);
-    for(const u of membersOf(line)){
-      const id=`rv-${mk}-${hash(line)}-${t.pct}-${hash(u)}`;
+    for(const u of fundMembers()){
+      const id=`rv-${mk}-co-${t.pct}-${hash(u)}`;
       if(S.ledger.some(e=>e.id===id)) continue;
-      await S.db.doc("ledger/"+id).set({userId:u,xp:t.xp,coins:t.coins,kind:"milestone",reason:`${line} đạt ${t.pct}% doanh số tháng ${mk.slice(5)}`,at:Date.now(),by:S.myId});
+      await S.db.doc("ledger/"+id).set({userId:u,xp:t.xp,coins:t.coins,kind:"milestone",reason:`Công ty đạt ${t.pct}% doanh số tháng ${mk.slice(5)}`,at:Date.now(),by:S.myId});
     }
   }
-  if(newly.length){ const t=newly[newly.length-1]; confetti(200); floatXP(`${line} đạt ${t.pct}%!`); }
+  if(newly.length){ const t=newly[newly.length-1]; confetti(220); floatXP(`Công ty đạt ${t.pct}%!`); }
 }
 
 function renderTabs(){
@@ -963,17 +968,17 @@ function myTeam(){return S.players[S.myId]?.team||null;}
 /* Ai cũng làm được nhiệm vụ của mọi đội; chỉ nhiệm vụ giao riêng cho một người là ẩn với người khác. */
 function visibleQuests(){
   const me=S.myId;
-  return S.quests.filter(q=>q.status!=="archived" && (q.mode!=="person"||q.assignee===me));
+  return S.quests.filter(q=>q.status!=="archived" && (q.mode==="person"?q.assignee===me:q.mode==="dept"?q.team===myTeam()||S.isMgr:true));
 }
-const isMyTeamQuest = q => q.mode==="all" || q.mode==="person" || q.team===myTeam();
+const isMyTeamQuest = q => q.mode!=="team" || q.team===myTeam();
 
 function renderJoin(){
   const join=$("#join");
   if(S.db && S.myId && S.canWrite!==false && !S.players[S.myId]){
     const opts=(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join("");
     join.innerHTML=`<div class="panel"><h2>Chào mừng bạn vào Đấu Trường</h2>
-      <p class="muted">Chọn đội hoặc cửa hàng của bạn để bắt đầu nhận nhiệm vụ, tích XP và đổi quà.</p>
-      <div class="frow"><div class="field"><label for="join-team">Đội / cửa hàng</label><select id="join-team">${opts}</select></div></div>
+      <p class="muted">Chọn vai trò của bạn để bắt đầu nhận nhiệm vụ, tích XP và đổi quà.</p>
+      <div class="frow"><div class="field"><label for="join-team">Vai trò của bạn</label><select id="join-team">${opts}</select></div></div>
       <div><button class="btn primary" data-act="join">Tham gia</button></div></div>`;
   } else join.innerHTML="";
 }
@@ -983,9 +988,9 @@ function renderQuests(){
   const list=$("#questlist");
   if(!S.ready){ list.innerHTML=""; return; }
   const today=dayKey(), mt=myTeam();
-  setOptions($("#qteam"),`<option value="all">Tất cả đội</option>`+(S.config.teams||[]).map(t=>`<option value="${esc(t)}">${esc(t)}${t===mt?" (đội của tôi)":""}</option>`).join(""));
+  setOptions($("#qteam"),`<option value="all">Tất cả mảng</option>`+Object.keys(LIBRARY).filter(k=>k!=="Thực tập sinh").map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(""));
   $("#qteam").value=S.qTeam;
-  const rows=visibleQuests().filter(q=>S.qTeam==="all"||q.team===S.qTeam||(!q.team&&q.mode!=="person")).map(q=>{
+  const rows=visibleQuests().filter(q=>S.qTeam==="all"||(q.area||q.team)===S.qTeam).map(q=>{
     const sub=S.myId?q.submissions?.[subKey(q,S.myId)]:null;
     const st=!sub?"todo":sub.status==="pending"?"pending":sub.status==="approved"?"done":"todo";
     return {q,sub,st};
@@ -999,8 +1004,8 @@ function renderQuests(){
   list.innerHTML=rows.map(({q,sub,st})=>{
     const T=TYPES[q.type]||TYPES.task;
     const rep=q.repeat==="daily"?`<span class="chip">Mỗi ngày</span>`:q.repeat==="weekly"?`<span class="chip">Mỗi tuần</span>`:"";
-    const other=q.team&&q.team!==mt;
-    const scope=q.mode==="team"?`<span class="chip team">Cả đội ${esc(q.team)}</span>`:q.mode==="dept"?`<span class="chip ${other?"weekly":""}">${other?"Đội khác · ":""}${esc(q.team)}</span>`:q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"";
+    const area=q.area||(q.mode==="dept"?null:q.team);
+    const scope=(q.mode==="company"?`<span class="chip team">Cả công ty cùng làm</span>`:q.mode==="team"?`<span class="chip team">Cả đội ${esc(q.team)}</span>`:q.mode==="dept"?`<span class="chip">${esc(q.team)}</span>`:"")+(area?`<span class="chip weekly">${esc(area)}</span>`:"")+(q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"");
     const overdue=q.due&&q.due<today&&st!=="done";
     const due=q.due?`<span class="chip ${overdue?"bad":""}">${overdue?"Quá hạn":"Hạn"} ${esc(q.due.split("-").reverse().slice(0,2).join("/"))}</span>`:"";
     let action="";
@@ -1124,6 +1129,7 @@ function renderAdmin(){
   if(!$("#q-xp").value){ applyTypeDefaults(); }
   setOptions($("#q-assignee"),playerOptions());
   setOptions($("#q-team"),(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join(""));
+  setOptions($("#q-area"),`<option value="">Chung</option>`+Object.keys(LIBRARY).map(k=>`<option>${esc(k)}</option>`).join(""));
   setOptions($("#a-user"),playerOptions());
   setOptions($("#a-preset"),PRESETS.map((p,i)=>`<option value="${i}">${esc(p.label)}</option>`).join(""));
   if(!$("#a-reason").value) applyPreset();
@@ -1131,7 +1137,7 @@ function renderAdmin(){
   const act=S.quests.filter(q=>q.status!=="archived").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   $("#activequests").innerHTML=act.length?act.map(q=>{
     const n=Object.values(q.submissions||{}).filter(s=>s.status==="approved").length;
-    const to=q.mode==="all"?"Tất cả":q.mode==="team"?"Cả đội "+q.team:q.mode==="dept"?"Từng người · "+q.team:nameOf(q.assignee);
+    const to=q.mode==="all"?"Mọi người":q.mode==="company"?"Cả công ty cùng làm":q.mode==="team"?"Cả đội "+q.team:q.mode==="dept"?"Vai trò "+q.team:nameOf(q.assignee);
     return `<div class="item"><div class="l"><b>${esc(q.title)}</b> <span class="chip ${esc(q.type)}">${esc((TYPES[q.type]||TYPES.task).label)}</span>
       <div class="muted small">${esc(to)} · ${q.repeat==="daily"?"mỗi ngày":q.repeat==="weekly"?"mỗi tuần":"một lần"} · +${fmt(+q.xp||0)} XP / +${fmt(+q.coins||0)} xu · ${n} lượt đã duyệt</div></div>
       <div class="acts"><button class="btn ghost sm" data-act="archive" data-id="${esc(q.id)}">Lưu trữ</button></div></div>`;
@@ -1152,7 +1158,7 @@ function renderAdmin(){
 }
 function applyTypeDefaults(){const t=TYPES[$("#q-type").value]||TYPES.task; $("#q-xp").value=t.xp; $("#q-coins").value=t.coins; if($("#q-type").value==="daily") $("#q-repeat").value="daily"; if($("#q-type").value==="weekly") $("#q-repeat").value="weekly"; if($("#q-type").value==="team") {$("#q-mode").value="team"; modeChanged();}}
 function applyPreset(){const p=PRESETS[+$("#a-preset").value||0]; $("#a-reason").value=p.label==="Khác"?"":p.label.replace(/^[^:]+:\s*/,""); $("#a-xp").value=p.xp; $("#a-coins").value=p.coins;}
-function modeChanged(){const m=$("#q-mode").value; $("#q-assignee-wrap").hidden=m!=="person"; $("#q-team-wrap").hidden=m!=="team"&&m!=="dept";}
+function modeChanged(){const m=$("#q-mode").value; $("#q-assignee-wrap").hidden=m!=="person"; $("#q-team-wrap").hidden=m!=="dept";}
 function libraryOptions(){
   return `<option value="">— Tự soạn nhiệm vụ —</option>`+Object.entries(LIBRARY).map(([d,list])=>`<optgroup label="${esc(d)}">${list.map((q,i)=>`<option value="${esc(d)}::${i}">${esc((TYPES[q[0]]||TYPES.task).label)} · ${esc(q[1])}</option>`).join("")}</optgroup>`).join("");
 }
@@ -1161,8 +1167,7 @@ function applyTemplate(){
   const [d,i]=v.split("::"), t=LIBRARY[d][+i], T=TYPES[t[0]];
   $("#q-title").value=t[1]; $("#q-desc").value=t[2]; $("#q-type").value=t[0];
   $("#q-xp").value=T.xp; $("#q-coins").value=T.coins; $("#q-repeat").value=t[3];
-  $("#q-mode").value=t[4];
-  if([...$("#q-team").options].some(o=>o.value===d)) $("#q-team").value=d;
+  $("#q-mode").value=t[4]==="team"?"company":"all"; $("#q-area").value=d;
   modeChanged();
 }
 
@@ -1216,7 +1221,7 @@ document.addEventListener("click", async ev=>{
     case "close-chest": $("#chestbox").hidden=true; break;
     case "open-sale": openSale(); break;
     case "copy-payroll": {
-      const tsv=["Nhân viên\tĐội\tXP tháng\tThưởng đội (đ)\tHoa hồng hẹn (đ)\tTổng (đ)",...cashPlan().map(r=>[nameOf(r.id),r.team,r.xp,Math.round(r.fund),Math.round(r.comm),Math.round(r.total)].join("\t"))].join("\n");
+      const tsv=["Nhân viên\tVai trò\tXP tháng\tQuỹ chung (đ)\tHoa hồng hẹn (đ)\tTổng (đ)",...cashPlan().map(r=>[nameOf(r.id),r.team,r.xp,Math.round(r.fund),Math.round(r.comm),Math.round(r.total)].join("\t"))].join("\n");
       navigator.clipboard.writeText(tsv).then(()=>toast("Đã sao chép. Mở Excel/Google Sheets và dán (Ctrl+V)."),()=>toast("Không sao chép được trên trình duyệt này. Hãy bôi đen bảng để copy."));
       break;
     }
@@ -1242,10 +1247,10 @@ document.addEventListener("click", async ev=>{
     }
     case "approve": {
       const q=S.quests.find(x=>x.id===id), sub=q?.submissions?.[key]; if(!sub) return;
-      const recips=q.mode==="team"?[...new Set([...Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u),sub.by])]:[sub.by];
+      const recips=q.mode==="company"?Object.keys(S.players):q.mode==="team"?[...new Set([...Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u),sub.by])]:[sub.by];
       b.disabled=true;
       await run(async()=>{
-        for(const u of recips) await db.doc("ledger/q-"+hash(q.id+"|"+key+"|"+u)).set({userId:u,xp:+q.xp||0,coins:+q.coins||0,kind:"quest",qtype:q.type,teamQuest:q.mode==="team",questId:q.id,reason:q.title,at:Date.now(),by:S.myId});
+        for(const u of recips) await db.doc("ledger/q-"+hash(q.id+"|"+key+"|"+u)).set({userId:u,xp:+q.xp||0,coins:+q.coins||0,kind:"quest",qtype:q.type,teamQuest:q.mode==="team"||q.mode==="company",questId:q.id,reason:q.title,at:Date.now(),by:S.myId});
         await db.doc("quests/"+q.id).update({submissions:{[key]:{status:"approved",reviewedBy:S.myId,reviewedAt:Date.now()}}});
       },`Đã duyệt · +${q.xp} XP cho ${recips.length} người`);
       { const r=b.getBoundingClientRect(); confetti(30,r.left+r.width/2,r.top); }
@@ -1327,7 +1332,7 @@ $("#f-quest").addEventListener("submit", async e=>{
   const mode=$("#q-mode").value;
   const q={title:$("#q-title").value.trim(), desc:$("#q-desc").value.trim(), type:$("#q-type").value,
     xp:Math.max(0,+$("#q-xp").value||0), coins:Math.max(0,+$("#q-coins").value||0), mode,
-    assignee:mode==="person"?$("#q-assignee").value:null, team:(mode==="team"||mode==="dept")?$("#q-team").value:null,
+    assignee:mode==="person"?$("#q-assignee").value:null, team:mode==="dept"?$("#q-team").value:null, area:$("#q-area").value||null,
     repeat:$("#q-repeat").value, due:$("#q-due").value||null, status:"active", createdBy:S.myId, createdAt:Date.now(), submissions:{}};
   if(!q.title) return;
   if(mode==="person"&&!q.assignee){ toast("Chưa có nhân viên nào để giao."); return; }
@@ -1374,7 +1379,7 @@ $("#f-reward").addEventListener("submit", async e=>{
 $("#f-settings").addEventListener("submit", async e=>{
   e.preventDefault();
   const teams=$("#s-teams").value.split("\n").map(s=>s.trim()).filter(Boolean);
-  await run(()=>S.db.doc("config/settings").set({...S.config,teams:teams.length?teams:Object.keys(LIBRARY),monthTarget:Math.max(1,+$("#s-target").value||1000)}),"Đã lưu cài đặt");
+  await run(()=>S.db.doc("config/settings").set({...S.config,teams:teams.length?teams:ROLES,monthTarget:Math.max(1,+$("#s-target").value||1000)}),"Đã lưu cài đặt");
   delete $("#s-target").dataset.touched;
 });
 

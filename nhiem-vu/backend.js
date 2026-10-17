@@ -55,7 +55,7 @@
     const KEY = "dtnv-demo-db", UKEY = "dtnv-demo-user";
     const now = Date.now();
     const seed = () => ({
-      config: { settings: { teams: ["OT Musics", "Tiếng Việt", "Vận hành Ads", "Coach 1:1 Ads", "Thực tập sinh"], monthTarget: 1000, admins: [] } },
+      config: { settings: { teams: ["CEO", "Quản lý", "Thực tập sinh"], monthTarget: 1000, admins: [] } },
       rewards: window.DTNV_REWARDS_SEED(),
       quests: Object.fromEntries([
         ["m0", "Làm và đăng 2 clip ngắn (TikTok/Reels/Shorts)", "Có hook 3 giây đầu và lời kêu gọi nhắn tin. Nộp 2 link.", "daily", 20, 5, "daily", "Thực tập sinh"],
@@ -66,7 +66,7 @@
         ["m4", "Chấm và phản hồi bài tập học viên trong 24 giờ", "Nộp số bài đã chấm trong ngày.", "daily", 20, 5, "daily", "Tiếng Việt"],
         ["m5", "Test 3 mẫu content/creative mới", "Nộp link 3 mẫu và kết quả CTR/CPA sau 3 ngày.", "weekly", 150, 30, "weekly", "Vận hành Ads"],
         ["m6", "Scale 1 chiến dịch lên x2 ngân sách mà giữ được CPA", "Nộp ảnh số liệu trước và sau khi scale.", "boss", 500, 100, "none", "Vận hành Ads"],
-      ].map(([id, title, desc, type, xp, coins, repeat, team]) => [id, { title: "[Mẫu] " + title, desc, type, xp, coins, mode: "dept", assignee: null, team, repeat, due: null, status: "active", createdAt: now, submissions: {} }])),
+      ].map(([id, title, desc, type, xp, coins, repeat, team]) => [id, { title: "[Mẫu] " + title, desc, type, xp, coins, mode: "all", assignee: null, team: null, area: team === "Thực tập sinh" ? null : team, repeat, due: null, status: "active", createdAt: now, submissions: {} }])),
       ledger: {}, redemptions: {}, players: {}, accounts: {},
     });
     let store; try { store = JSON.parse(localStorage.getItem(KEY)); } catch {}
@@ -145,7 +145,7 @@
       }
       const sref = fs.doc("config/settings");
       let settings = (await sref.get()).data();
-      if (!settings) { settings = { teams: ["OT Musics", "Tiếng Việt", "Vận hành Ads", "Coach 1:1 Ads", "Thực tập sinh"], monthTarget: 1000, admins: [fu.uid] }; await sref.set(settings); }
+      if (!settings) { settings = { teams: ["CEO", "Quản lý", "Thực tập sinh"], monthTarget: 1000, admins: [fu.uid] }; await sref.set(settings); }
       return { auth, fs, fu, settings };
     })();
     const mapErr = e => { throw { code: e && e.code === "permission-denied" ? "invalid_argument" : "unavailable", message: String(e && e.message) }; };
