@@ -298,11 +298,12 @@ textarea{resize:vertical;min-height:70px}
     <div id="herocard"></div>
     <div class="section-head">
       <h2>Nhiệm vụ của bạn</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="qteam" aria-label="Lọc theo đội" style="width:auto"></select>
       <div class="seg" id="qfilter">
         <button data-f="todo" aria-pressed="true">Cần làm</button>
         <button data-f="pending" aria-pressed="false">Chờ duyệt</button>
         <button data-f="done" aria-pressed="false">Đã xong</button>
-      </div>
+      </div></div>
     </div>
     <div id="questlist" class="qgrid"></div>
   </section>
@@ -677,7 +678,7 @@ const PRESETS = [
 const S = {
   db:null, user:null, myId:null, isMgr:false, canWrite:null, ready:false,
   quests:[], ledger:[], appts:[], apF:"upcoming", sales:[], saleCtx:null, rewards:[], redemptions:[], players:{}, config:{teams:Object.keys(LIBRARY), monthTarget:1000},
-  profiles:{}, tab:"quests", qf:"todo", lbPeriod:"month", lbMode:"person",
+  profiles:{}, tab:"quests", qf:"todo", qTeam:"all", lbPeriod:"month", lbMode:"person",
   submitting:null, confirmRedeem:null, rejecting:{},
 };
 
@@ -782,7 +783,7 @@ function renderHero(){
   const el=$("#herocard");
   if(!S.myId||!S.players[S.myId]){ el.innerHTML=""; return; }
   const s=stats(S.myId), lv=levelOf(s.xp), rank=myRank();
-  const vq=visibleQuests().filter(q=>q.repeat==="daily");
+  const vq=visibleQuests().filter(q=>q.repeat==="daily"&&isMyTeamQuest(q));
   const dDone=vq.filter(q=>{const x=q.submissions?.[subKey(q,S.myId)];return x&&x.status!=="rejected";}).length;
   el.innerHTML=`<div class="hero-card">
     <div class="ring" style="--p:${lv.pct}">${avatarImg(S.myId)}<span class="lvlnum">LV ${lv.i+1}</span></div>
@@ -959,10 +960,12 @@ function renderTabs(){
 }
 
 function myTeam(){return S.players[S.myId]?.team||null;}
+/* Ai cũng làm được nhiệm vụ của mọi đội; chỉ nhiệm vụ giao riêng cho một người là ẩn với người khác. */
 function visibleQuests(){
-  const me=S.myId, team=myTeam();
-  return S.quests.filter(q=>q.status!=="archived" && (q.mode==="all"||(q.mode==="person"&&q.assignee===me)||((q.mode==="team"||q.mode==="dept")&&q.team===team)));
+  const me=S.myId;
+  return S.quests.filter(q=>q.status!=="archived" && (q.mode!=="person"||q.assignee===me));
 }
+const isMyTeamQuest = q => q.mode==="all" || q.mode==="person" || q.team===myTeam();
 
 function renderJoin(){
   const join=$("#join");
@@ -979,14 +982,16 @@ function renderQuests(){
   renderHero();
   const list=$("#questlist");
   if(!S.ready){ list.innerHTML=""; return; }
-  const today=dayKey();
-  const rows=visibleQuests().map(q=>{
+  const today=dayKey(), mt=myTeam();
+  setOptions($("#qteam"),`<option value="all">Tất cả đội</option>`+(S.config.teams||[]).map(t=>`<option value="${esc(t)}">${esc(t)}${t===mt?" (đội của tôi)":""}</option>`).join(""));
+  $("#qteam").value=S.qTeam;
+  const rows=visibleQuests().filter(q=>S.qTeam==="all"||q.team===S.qTeam||(!q.team&&q.mode!=="person")).map(q=>{
     const sub=S.myId?q.submissions?.[subKey(q,S.myId)]:null;
     const st=!sub?"todo":sub.status==="pending"?"pending":sub.status==="approved"?"done":"todo";
     return {q,sub,st};
   }).filter(r=>r.st===S.qf);
   const order={boss:0,team:1,task:2,weekly:3,daily:4,learn:5};
-  rows.sort((a,b)=>(order[a.q.type]??9)-(order[b.q.type]??9)||(a.q.due||"9").localeCompare(b.q.due||"9"));
+  rows.sort((a,b)=>isMyTeamQuest(b.q)-isMyTeamQuest(a.q)||(order[a.q.type]??9)-(order[b.q.type]??9)||(a.q.due||"9").localeCompare(b.q.due||"9"));
   if(!rows.length){
     const msg={todo:S.quests.length?"Bạn đã xử lý hết nhiệm vụ. Quay lại sau nhé!":"Chưa có nhiệm vụ nào. Quản lý sẽ giao nhiệm vụ ở tab Quản lý.",pending:"Không có nhiệm vụ nào đang chờ duyệt.",done:"Chưa có nhiệm vụ nào hoàn thành trong kỳ này."}[S.qf];
     list.innerHTML=`<div class="empty" style="grid-column:1/-1">${msg}</div>`; return;
@@ -994,7 +999,8 @@ function renderQuests(){
   list.innerHTML=rows.map(({q,sub,st})=>{
     const T=TYPES[q.type]||TYPES.task;
     const rep=q.repeat==="daily"?`<span class="chip">Mỗi ngày</span>`:q.repeat==="weekly"?`<span class="chip">Mỗi tuần</span>`:"";
-    const scope=q.mode==="team"?`<span class="chip team">Cả đội ${esc(q.team)}</span>`:q.mode==="dept"?`<span class="chip">${esc(q.team)}</span>`:q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"";
+    const other=q.team&&q.team!==mt;
+    const scope=q.mode==="team"?`<span class="chip team">Cả đội ${esc(q.team)}</span>`:q.mode==="dept"?`<span class="chip ${other?"weekly":""}">${other?"Đội khác · ":""}${esc(q.team)}</span>`:q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"";
     const overdue=q.due&&q.due<today&&st!=="done";
     const due=q.due?`<span class="chip ${overdue?"bad":""}">${overdue?"Quá hạn":"Hạn"} ${esc(q.due.split("-").reverse().slice(0,2).join("/"))}</span>`:"";
     let action="";
@@ -1236,7 +1242,7 @@ document.addEventListener("click", async ev=>{
     }
     case "approve": {
       const q=S.quests.find(x=>x.id===id), sub=q?.submissions?.[key]; if(!sub) return;
-      const recips=q.mode==="team"?Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u):[sub.by];
+      const recips=q.mode==="team"?[...new Set([...Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u),sub.by])]:[sub.by];
       b.disabled=true;
       await run(async()=>{
         for(const u of recips) await db.doc("ledger/q-"+hash(q.id+"|"+key+"|"+u)).set({userId:u,xp:+q.xp||0,coins:+q.coins||0,kind:"quest",qtype:q.type,teamQuest:q.mode==="team",questId:q.id,reason:q.title,at:Date.now(),by:S.myId});
@@ -1308,6 +1314,7 @@ function closeModal(){ $("#modal").hidden=true; S.submitting=null; }
 document.addEventListener("change", e=>{
   if(e.target.id==="q-type") applyTypeDefaults();
   if(e.target.id==="q-tpl") applyTemplate();
+  if(e.target.id==="qteam"){ S.qTeam=e.target.value; renderQuests(); }
   if(e.target.id==="q-mode") modeChanged();
   if(e.target.id==="a-preset") applyPreset();
   if(e.target.id==="ap-kind") $("#ap-product").value=APPT_KINDS[e.target.value].product;
