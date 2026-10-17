@@ -645,8 +645,11 @@ const ROLES = ["CEO","Quản lý","Thực tập sinh"];  // công ty dùng vai t
 const targets = () => S.config.targets || DEFAULT_TARGETS;
 const companyTarget = () => Object.values(targets()).reduce((a,v)=>a+(+v||0),0);
 const companyTotal = (mk=monthKey()) => S.sales.filter(x=>monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0);
-/* Quỹ thưởng chung chia cho mọi người trừ CEO. */
-const fundMembers = () => Object.entries(S.players).filter(([,p])=>p.team!=="CEO").map(([id])=>id);
+/* Tiền thưởng (quỹ chung + hoa hồng) chỉ dành cho thực tập sinh: CEO không nhận, quản lý đã có hệ thống lương riêng.
+   Thưởng trong game (XP, xu) ở các mốc doanh số vẫn trao cho mọi người trừ CEO. */
+const NO_CASH_ROLES = ["CEO","Quản lý"];
+const fundMembers = () => Object.entries(S.players).filter(([,p])=>!NO_CASH_ROLES.includes(p.team)).map(([id])=>id);
+const gameMembers = () => Object.entries(S.players).filter(([,p])=>p.team!=="CEO").map(([id])=>id);
 const lineTeams = () => S.config.lineTeams || DEFAULT_LINE_TEAMS;
 const tiers = () => S.config.tiers || DEFAULT_TIERS;
 function lineOfProduct(p){ if(targets()[p]) return p; for(const [l,ts] of Object.entries(lineTeams())) if(ts.includes(p)) return l; return Object.keys(targets())[0]; }
@@ -675,7 +678,7 @@ function cashPlan(){
       const fund=act*hit[hit.length-1].fund/100, sh=fundShares(mem);
       mem.forEach((id,i)=>{ row(id).fund+=fund*sh[i]; });
     } }
-  for(const id of new Set(S.appts.map(a=>a.by))){ const c=commissionOf(id).total; if(c) row(id).comm+=c; }
+  for(const id of new Set(S.appts.map(a=>a.by))){ if(NO_CASH_ROLES.includes(S.players[id]?.team)) continue; const c=commissionOf(id).total; if(c) row(id).comm+=c; }
   return Object.values(rows).map(r=>({...r,total:r.fund+r.comm})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
 }
 function lineTotal(line,mk=monthKey()){ return S.sales.filter(x=>x.line===line&&monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0); }
@@ -901,8 +904,8 @@ function renderSales(){
         <span class="grade ${pct>=100?"A":pct>=80?"B":pct>=60?"C":"D"}" style="margin-left:auto">${Math.floor(pct)}%</span></div>
       <div class="hp" style="height:30px"><i style="width:${Math.min(100,pct/1.2)}%"></i>${TI.map(t=>`<span class="mk ${pct>=t.pct?"hit":""}" style="left:${t.pct/1.2}%" title="Mốc ${t.pct}%"></span>`).join("")}<b>${money(sumA)} / ${money(sumT)}</b></div>
       <div class="boss-stats"><span>${need?`Còn thiếu <b>${money(need)}</b> · cần <b>${money(need/left)}</b>/ngày`:`Đã vượt <b>${money(sumA-sumT)}</b>`}</span><span>${nextT?`Mốc kế tiếp ${nextT.pct}%: còn <b>${money(Math.max(0,sumT*nextT.pct/100-sumA))}</b>`:"Đã đạt mốc cao nhất"}</span></div>
-      <div class="tierrow">${TI.map(t=>`<span class="tier ${pct>=t.pct?"hit":""}">${t.pct}%: quỹ ${t.fund}% · +${t.xp} XP mỗi người</span>`).join("")}</div>
-      <div class="muted small">Quỹ thưởng chung hiện tại: <b style="color:var(--gold)">${money(sumFund)}</b> · chia cho ${fundMembers().length} người (trừ CEO) theo lịch hẹn, doanh số chốt từ lịch và XP</div>
+      <div class="tierrow">${TI.map(t=>`<span class="tier ${pct>=t.pct?"hit":""}">${t.pct}%: quỹ TTS ${t.fund}% · +${t.xp} XP mỗi người</span>`).join("")}</div>
+      <div class="muted small">Quỹ thưởng chung hiện tại: <b style="color:var(--gold)">${money(sumFund)}</b> · chia cho ${fundMembers().length} thực tập sinh theo lịch hẹn, doanh số chốt từ lịch và XP</div>
     </div>`;
   $("#sl-bosses").innerHTML=Object.entries(T).map(([line,target])=>{
     const act=lineTotal(line), lp=target?act/target*100:0, share=sumA?act/sumA*100:0;
@@ -918,13 +921,13 @@ function renderSales(){
   $("#sl-recent").innerHTML=rec.length?rec.map(x=>`<div class="item"><div class="l"><b>${esc(x.customer)}</b> <span class="chip">${esc(x.line)}</span><div class="muted small">${dateVN(x.at)}${x.by?` · ${esc(nameOf(x.by))}`:""}</div></div>
     <div class="acts"><b class="num" style="color:var(--gold)">${money(x.amount)}</b>${S.isMgr?`<button class="btn ghost sm" data-act="sale-del" data-id="${esc(x.id)}">Xoá</button>`:""}</div></div>`).join(""):`<p class="muted small">Chưa có hợp đồng khách mới nào tháng này.</p>`;
   $("#sl-policy").innerHTML=`<h2>Chính sách thưởng khi đạt doanh số</h2>
-    <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng chung (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
+    <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng chung (tiền)</th><th class="r">Thưởng game mỗi người (cả quản lý)</th></tr></thead><tbody>
     ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% tổng doanh số khách mới công ty</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ chung chia cho mọi người trừ CEO theo đóng góp: 50% theo doanh số anh Tâm chốt được từ lịch hẹn của mình, 30% theo số buổi call/học thử diễn ra, 20% theo XP tháng (clip, tin nhắn, nhiệm vụ). Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ chung chỉ chia cho thực tập sinh (quản lý tính lương theo hệ thống riêng, CEO không nhận) theo đóng góp: 50% theo doanh số anh Tâm chốt được từ lịch hẹn của mình, 30% theo số buổi call/học thử diễn ra, 20% theo XP tháng (clip, tin nhắn, nhiệm vụ). Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
   $("#sl-payroll").hidden=!S.isMgr;
   if(S.isMgr){
     const plan=cashPlan(), tot=plan.reduce((a,r)=>a+r.total,0);
-    $("#sl-payroll").innerHTML=`<div class="section-head"><h2>Bảng thưởng tiền tháng ${d.getMonth()+1} (dự kiến)</h2><button class="btn ghost sm" data-act="copy-payroll">Sao chép bảng để dán vào Excel</button></div>
+    $("#sl-payroll").innerHTML=`<div class="section-head"><h2>Bảng thưởng tiền thực tập sinh tháng ${d.getMonth()+1} (dự kiến)</h2><button class="btn ghost sm" data-act="copy-payroll">Sao chép bảng để dán vào Excel</button></div>
       ${plan.length?`<div class="tablewrap"><table><thead><tr><th>Nhân viên</th><th>Vai trò</th><th class="r">Buổi diễn ra</th><th class="r">Chốt từ lịch</th><th class="r">XP tháng</th><th class="r">Quỹ chung</th><th class="r">Hoa hồng hẹn</th><th class="r">Tổng</th></tr></thead><tbody>
       ${plan.map(r=>`<tr><td><div class="who">${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div></td><td>${esc(r.team)}</td><td class="r num">${r.shows}</td><td class="r num">${money(r.closedV)}</td><td class="r num">${fmt(r.xp)}</td><td class="r num">${cash(r.fund)}</td><td class="r num">${cash(r.comm)}</td><td class="r num"><b style="color:var(--gold)">${cash(r.total)}</b></td></tr>`).join("")}
       <tr><td colspan="7"><b>Tổng chi thưởng</b> · ${sumA?((tot/sumA)*100).toLocaleString("vi-VN",{maximumFractionDigits:1}):0}% doanh số</td><td class="r num"><b style="color:var(--gold)">${cash(tot)}</b></td></tr></tbody></table></div>`
@@ -951,7 +954,7 @@ async function recordSale(sale){
   for(const t of tiers()){
     if(!target||after/target*100<t.pct) continue;
     if(before/target*100<t.pct) newly.push(t);
-    for(const u of fundMembers()){
+    for(const u of gameMembers()){
       const id=`rv-${mk}-co-${t.pct}-${hash(u)}`;
       if(S.ledger.some(e=>e.id===id)) continue;
       await S.db.doc("ledger/"+id).set({userId:u,xp:t.xp,coins:t.coins,kind:"milestone",reason:`Công ty đạt ${t.pct}% doanh số tháng ${mk.slice(5)}`,at:Date.now(),by:S.myId});
