@@ -6,20 +6,21 @@
   const CFG = window.DTNV_FIREBASE_CONFIG || null;
   window.DTNV_REWARDS_SEED = () => REWARDS;
   const REWARDS = {
-    chest: { name: "Rương bí ẩn", cost: 120, stock: null, kind: "chest", desc: "Mở ra một phần quà ngẫu nhiên. Có cơ hội trúng Jackpot!",
-      prizes: [{ n: "Trà sữa size L", w: 35 }, { n: "Voucher Grab 50.000đ", w: 25 }, { n: "Về sớm 1 tiếng", w: 20 }, { n: "Thẻ miễn 1 lần đi trễ", w: 12 }, { n: "Nửa ngày nghỉ phép", w: 6 }, { n: "JACKPOT 500.000đ tiền mặt", w: 2 }] },
-    dj: { name: "Làm DJ văn phòng 1 ngày", cost: 60, stock: null, desc: "Cả team nghe playlist của bạn cả ngày." },
-    milktea: { name: "Ly trà sữa hoặc cà phê tuỳ chọn", cost: 80, stock: null, desc: "Order giao tận bàn." },
-    late: { name: "Thẻ miễn 1 lần đi trễ", cost: 150, stock: null, desc: "Xoá 1 lỗi đi trễ trong tháng." },
-    early: { name: "Về sớm 2 tiếng", cost: 300, stock: null, desc: "Báo quản lý trước 1 ngày." },
-    lunch: { name: "Ăn trưa 1:1 cùng anh Tâm", cost: 400, stock: null, desc: "Hỏi gì cũng được: ads, kinh doanh, sự nghiệp." },
-    coach: { name: "1 buổi coach ads 1:1 với anh Tâm", cost: 600, stock: null, desc: "Review tài khoản ads hoặc kênh cá nhân của bạn." },
-    course: { name: "Khoá quay dựng video bằng điện thoại (OT Media)", cost: 700, stock: null, desc: "Học trọn đời, có cập nhật." },
-    halfday: { name: "Nửa ngày nghỉ phép", cost: 800, stock: 5 },
-    music: { name: "1 tháng học nhạc cụ tại OT Musics", cost: 1200, stock: 3, desc: "Guitar, piano hoặc thanh nhạc." },
-    gift: { name: "Thẻ quà tặng 500.000đ", cost: 1500, stock: 3 },
-    bday: { name: "Ngày nghỉ sinh nhật + 1.000.000đ", cost: 3000, stock: 2, desc: "Chỉ Huyền thoại mới đổi được." },
+    chest: { name: "Rương bí ẩn", cost: 140, value: 70000, stock: null, kind: "chest", desc: "Mở ra một phần quà ăn uống ngẫu nhiên. Có cơ hội trúng buffet đôi!",
+      prizes: [{ n: "Cà phê tuỳ chọn", v: 35000, w: 40 }, { n: "Trà sữa size M", v: 45000, w: 30 }, { n: "Voucher GrabFood 50k", v: 50000, w: 15 }, { n: "Vé xem phim CGV", v: 100000, w: 10 }, { n: "Vé buffet lẩu nướng", v: 300000, w: 4 }, { n: "JACKPOT: 2 vé buffet lẩu nướng", v: 600000, w: 1 }] },
+    coffee: { name: "Cà phê tuỳ chọn (Highlands, Phúc Long...)", value: 35000, cost: 70, stock: null },
+    milktea: { name: "Trà sữa size M (Gong Cha, Katinat...)", value: 45000, cost: 90, stock: null },
+    food50: { name: "Voucher ShopeeFood/GrabFood 50k", value: 50000, cost: 100, stock: null, desc: "Gửi mã voucher qua Zalo." },
+    card100: { name: "Thẻ cào điện thoại 100k", value: 100000, cost: 200, stock: null, desc: "Nhà mạng tuỳ chọn." },
+    movie: { name: "Vé xem phim CGV 2D", value: 100000, cost: 200, stock: null },
+    food100: { name: "Voucher ShopeeFood/GrabFood 100k", value: 100000, cost: 200, stock: null },
+    teamtea: { name: "Trà sữa cho cả team (5 ly)", value: 225000, cost: 450, stock: null, desc: "Bạn khao cả team, công ty trả tiền." },
+    movie2: { name: "Combo 2 vé phim + bắp nước", value: 280000, cost: 560, stock: null },
+    buffet: { name: "Vé buffet lẩu nướng (Manwah, Kichi Kichi, Gogi...)", value: 300000, cost: 600, stock: null },
+    buffet2: { name: "2 vé buffet lẩu nướng (đi cùng người thương)", value: 600000, cost: 1200, stock: null },
+    buffetvip: { name: "Vé buffet hải sản cao cấp", value: 800000, cost: 1600, stock: 3 },
   };
+
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   function loginScreen(kind, errorMsg) {

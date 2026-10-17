@@ -457,9 +457,10 @@ textarea{resize:vertical;min-height:70px}
       <div class="panel">
         <h2>Phần thưởng</h2>
         <form id="f-reward">
-          <div class="field"><label for="r-name">Tên phần thưởng</label><input id="r-name" required maxlength="80" placeholder="VD: 1 buổi chiều nghỉ phép"></div>
+          <div class="field"><label for="r-name">Tên phần thưởng</label><input id="r-name" required maxlength="80" placeholder="VD: Trà sữa Phúc Long size M"></div>
           <div class="frow">
-            <div class="field"><label for="r-cost">Giá (xu)</label><input id="r-cost" type="number" min="1" required></div>
+            <div class="field"><label for="r-value">Giá trị (nghìn đồng)</label><input id="r-value" type="number" min="1" required placeholder="VD: 45"></div>
+            <div class="field"><label for="r-cost">Giá (xu, để trống = tự tính)</label><input id="r-cost" type="number" min="1"></div>
             <div class="field"><label for="r-stock">Số lượng (để trống = không giới hạn)</label><input id="r-stock" type="number" min="0"></div>
           </div>
           <button class="btn primary" type="submit">Thêm phần thưởng</button>
@@ -546,6 +547,8 @@ const QICON = {
 };
 const GIFT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-1-3-5-4-5-1.5S10 8 12 8zm0 0c1-3 5-4 5-1.5S14 8 12 8z"/></svg>';
 const CHEST='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1H3z" fill="currentColor" fill-opacity=".25"/><path d="M3 11h18v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="10" y="9.5" width="4" height="4.5" rx="1" fill="currentColor"/></svg>';
+const XU_VND = 500;  // quy đổi: 1 xu ≈ 500đ (100 xu = 50.000đ)
+const vnd = v => fmt(Math.round(+v||0))+"đ";
 const rewardRar = c => c<200?"common":c<600?"rare":c<1500?"epic":"legend";
 function pickPrize(prizes){ const tot=prizes.reduce((a,p)=>a+(+p.w||0),0); let r=Math.random()*tot; for(const p of prizes){ r-=+p.w||0; if(r<0) return p; } return prizes[prizes.length-1]; }
 const CROWN='<svg class="crown" viewBox="0 0 34 24" fill="currentColor"><path d="M2 6l7 7 8-11 8 11 7-7-3 16H5z"/></svg>';
@@ -1041,15 +1044,15 @@ function rewardLeft(r){
 }
 function renderShop(){
   const coins=S.myId?stats(S.myId).coins:0;
-  $("#shopcoins").innerHTML=`${ICON.coin}Bạn có <span class="num">${fmt(coins)}</span> xu`;
+  $("#shopcoins").innerHTML=`${ICON.coin}Bạn có <span class="num">${fmt(coins)}</span> xu ≈ ${vnd(coins*XU_VND)}`;
   const list=$("#rewardlist");
   const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>(b.kind==="chest")-(a.kind==="chest")||a.cost-b.cost);
   list.innerHTML=rs.length?rs.map(r=>{
     const left=rewardLeft(r), out=left===0, poor=coins<r.cost, conf=S.confirmRedeem===r.id;
     const dis=!S.myId||!S.players[S.myId]||S.canWrite===false||out||poor;
     const rar=r.kind==="chest"?"legend":rewardRar(+r.cost), chest=r.kind==="chest"&&Array.isArray(r.prizes);
-    const odds=chest?(()=>{const t=r.prizes.reduce((a,p)=>a+(+p.w||0),0);return r.prizes.map(p=>`${esc(p.n)} ${Math.round(p.w/t*100)}%`).join(" · ");})():"";
-    return `<div class="reward rar-${rar} ${chest?"is-chest":""}"><span class="rarity">${chest?"Rương bí ẩn":RARITY[rar]}</span><span class="gift">${chest?CHEST:GIFT}</span><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}${chest?`<p class="small odds">${odds}</p>`:""}
+    const odds=chest?(()=>{const t=r.prizes.reduce((a,p)=>a+(+p.w||0),0);return r.prizes.map(p=>`${esc(p.n)}${p.v?` (${fmt(p.v/1000)}k)`:""} ${Math.round(p.w/t*100)}%`).join(" · ");})():"";
+    return `<div class="reward rar-${rar} ${chest?"is-chest":""}"><span class="rarity">${chest?"Rương bí ẩn":RARITY[rar]}${r.value?` · giá trị ≈ ${vnd(r.value)}`:""}</span><span class="gift">${chest?CHEST:GIFT}</span><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}${chest?`<p class="small odds">${odds}</p>`:""}
       <span class="cost">${ICON.coin}${fmt(r.cost)} xu</span>
       <span class="muted small">${left===null?"Không giới hạn":out?"Đã hết":`Còn ${left}`}</span>
       <button class="btn ${conf?"good":"primary"} sm" data-act="redeem" data-id="${esc(r.id)}" ${dis?"disabled":""}>${out?"Hết quà":poor?`Thiếu ${fmt(r.cost-coins)} xu`:conf?"Bấm lần nữa để xác nhận":chest?"Mở rương":"Đổi quà"}</button></div>`;
@@ -1105,8 +1108,10 @@ function renderAdmin(){
 
   const reds=S.redemptions.filter(r=>r.status==="pending").sort((a,b)=>a.at-b.at);
   $("#redcount").textContent=reds.length;
-  $("#redeemreqs").innerHTML=reds.length?reds.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="small">${esc(nameOf(r.userId))} · ${dateVN(r.at)} · ${fmt(r.cost)} xu</div></div>
+  $("#redeemreqs").innerHTML=reds.length?reds.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="small">${esc(nameOf(r.userId))} · ${dateVN(r.at)} · ${fmt(r.cost)} xu${r.value?` · cần mua ≈ <b>${vnd(r.value)}</b>`:""}</div></div>
     <div class="acts"><button class="btn danger sm" data-act="red-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn good sm" data-act="red-deliver" data-id="${esc(r.id)}">Đã trao</button></div></div>`).join(""):`<p class="muted small">Không có yêu cầu nào.</p>`;
+  { const mk=monthKey(), spent=S.redemptions.filter(r=>r.status==="delivered"&&monthKey(r.doneAt||r.at)===mk).reduce((a,r)=>a+(+r.value||0),0);
+    $("#redeemreqs").insertAdjacentHTML("beforeend",`<p class="muted small">Chi phí quà đã trao tháng này: <b style="color:var(--gold)">${vnd(spent)}</b></p>`); }
 
   setOptions($("#q-tpl"),libraryOptions());
   setOptions($("#q-type"),Object.entries(TYPES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join(""));
@@ -1127,7 +1132,7 @@ function renderAdmin(){
   }).join(""):`<p class="muted small">Chưa có nhiệm vụ nào.</p>`;
 
   const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>a.cost-b.cost);
-  $("#rewardadmin").innerHTML=rs.map(r=>`<div class="item"><div class="l"><b>${esc(r.name)}</b><div class="muted small">${fmt(r.cost)} xu · ${rewardLeft(r)===null?"không giới hạn":"còn "+rewardLeft(r)}</div></div>
+  $("#rewardadmin").innerHTML=rs.map(r=>`<div class="item"><div class="l"><b>${esc(r.name)}</b><div class="muted small">${fmt(r.cost)} xu${r.value?` · ≈ ${vnd(r.value)}`:""} · ${rewardLeft(r)===null?"không giới hạn":"còn "+rewardLeft(r)}</div></div>
     <div class="acts"><button class="btn ghost sm" data-act="reward-del" data-id="${esc(r.id)}">Gỡ</button></div></div>`).join("");
 
   const ta=$("#s-teams"), tg=$("#s-target");
@@ -1256,11 +1261,11 @@ document.addEventListener("click", async ev=>{
       if(stats(S.myId).coins<r.cost){ toast("Bạn chưa đủ xu."); renderShop(); return; }
       if(r.kind==="chest"&&Array.isArray(r.prizes)&&r.prizes.length){
         const prize=pickPrize(r.prizes);
-        await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:`${r.name}: ${prize.n}`,prize:prize.n,cost:+r.cost,status:"pending",at:Date.now()}));
+        await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:`${r.name}: ${prize.n}`,prize:prize.n,value:+prize.v||0,cost:+r.cost,status:"pending",at:Date.now()}));
         openChest(prize, r.prizes);
         break;
       }
-      await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:r.name,cost:+r.cost,status:"pending",at:Date.now()}),"Đã gửi yêu cầu đổi quà");
+      await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:r.name,value:+r.value||0,cost:+r.cost,status:"pending",at:Date.now()}),"Đã gửi yêu cầu đổi quà");
       break;
     }
     case "red-deliver": {
@@ -1355,7 +1360,8 @@ $("#f-appt").addEventListener("submit", async e=>{
 $("#f-reward").addEventListener("submit", async e=>{
   e.preventDefault();
   const st=$("#r-stock").value;
-  await run(()=>S.db.collection("rewards").add({name:$("#r-name").value.trim(),cost:Math.max(1,+$("#r-cost").value||1),stock:st===""?null:Math.max(0,+st),createdAt:Date.now()}),"Đã thêm phần thưởng");
+  const value=Math.max(1,+$("#r-value").value||0)*1000;
+  await run(()=>S.db.collection("rewards").add({name:$("#r-name").value.trim(),value,cost:Math.max(1,+$("#r-cost").value||Math.round(value/XU_VND)),stock:st===""?null:Math.max(0,+st),createdAt:Date.now()}),"Đã thêm phần thưởng");
   e.target.reset();
 });
 $("#f-settings").addEventListener("submit", async e=>{
