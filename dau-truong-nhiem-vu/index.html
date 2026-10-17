@@ -222,6 +222,20 @@ tr.me td{background:rgba(255,200,61,.1)}
 /* rewards = shop items */
 .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .reward{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.reward{--rc:var(--common);border-color:color-mix(in srgb,var(--rc) 45%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,var(--surface)),var(--surface) 60%);transition:transform .15s ease,box-shadow .15s ease}
+.reward:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.4),0 0 0 1px var(--rc),0 0 22px color-mix(in srgb,var(--rc) 35%,transparent)}
+.reward.rar-rare,.modal.rar-rare{--rc:var(--rare)}.reward.rar-epic,.modal.rar-epic{--rc:var(--epic)}.reward.rar-legend,.modal.rar-legend{--rc:var(--legend)}.modal.rar-common{--rc:var(--common)}
+.reward .rarity{color:var(--rc)}
+.reward .gift{color:var(--rc)!important;background:color-mix(in srgb,var(--rc) 18%,var(--bg))!important}
+.reward.is-chest{grid-column:1/-1;flex-direction:column;animation:legend 2.4s ease-in-out infinite}
+.reward .odds{color:var(--muted);line-height:1.6}
+.cb-chest{width:110px;height:110px;color:var(--gold);filter:drop-shadow(0 0 18px rgba(255,200,61,.6))}
+.cb-chest svg{width:100%;height:100%}
+.chest-open:not(.revealed) .cb-chest{animation:shake .25s ease-in-out infinite}
+.chest-open.revealed .cb-chest{color:var(--rc);animation:popin .4s cubic-bezier(.2,.9,.3,1.4)}
+.chest-open.revealed{border-color:var(--rc);box-shadow:0 0 60px color-mix(in srgb,var(--rc) 45%,transparent)}
+.chest-open .rarity{color:var(--rc);font-size:.8rem}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.04)}75%{transform:rotate(8deg) scale(1.04)}}
 .reward .gift{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold)}
 .reward .gift svg{width:26px;height:26px}
 .reward .cost{font-family:var(--font-display);font-weight:800;color:var(--gold);font-size:1.15rem;display:flex;align-items:center;gap:6px}
@@ -478,6 +492,15 @@ textarea{resize:vertical;min-height:70px}
 </div>
 <div id="toast" class="toast" hidden></div>
 <canvas id="fx" aria-hidden="true"></canvas>
+<div id="chestbox" class="overlay" hidden>
+  <div class="modal levelup" role="dialog" aria-modal="true" aria-labelledby="cb-prize">
+    <span class="cb-chest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1H3z" fill="currentColor" fill-opacity=".25"/><path d="M3 11h18v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="10" y="9.5" width="4" height="4.5" rx="1" fill="currentColor"/></svg></span>
+    <span class="rarity" id="cb-rar"></span>
+    <span class="big" id="cb-prize"></span>
+    <p class="muted small" id="cb-note"></p>
+    <button class="btn primary" data-act="close-chest">Tuyệt vời!</button>
+  </div>
+</div>
 <div id="salemodal" class="overlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sm-title">
     <h2 id="sm-title">Ghi nhận doanh số khách mới</h2>
@@ -522,6 +545,9 @@ const QICON = {
   boss:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 2 4 5.6 4 10c0 2.6 1.2 4.4 3 5.6V19a1 1 0 0 0 1 1h1.5v-2h1.5v2h2v-2h1.5v2H16a1 1 0 0 0 1-1v-3.4c1.8-1.2 3-3 3-5.6 0-4.4-3-8-8-8zm-3.5 11a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>',
 };
 const GIFT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-1-3-5-4-5-1.5S10 8 12 8zm0 0c1-3 5-4 5-1.5S14 8 12 8z"/></svg>';
+const CHEST='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1H3z" fill="currentColor" fill-opacity=".25"/><path d="M3 11h18v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="10" y="9.5" width="4" height="4.5" rx="1" fill="currentColor"/></svg>';
+const rewardRar = c => c<200?"common":c<600?"rare":c<1500?"epic":"legend";
+function pickPrize(prizes){ const tot=prizes.reduce((a,p)=>a+(+p.w||0),0); let r=Math.random()*tot; for(const p of prizes){ r-=+p.w||0; if(r<0) return p; } return prizes[prizes.length-1]; }
 const CROWN='<svg class="crown" viewBox="0 0 34 24" fill="currentColor"><path d="M2 6l7 7 8-11 8 11 7-7-3 16H5z"/></svg>';
 const LEVELS = [
   {n:"Tân binh", min:0}, {n:"Chiến binh", min:500}, {n:"Tinh anh", min:1500},
@@ -1017,14 +1043,16 @@ function renderShop(){
   const coins=S.myId?stats(S.myId).coins:0;
   $("#shopcoins").innerHTML=`${ICON.coin}Bạn có <span class="num">${fmt(coins)}</span> xu`;
   const list=$("#rewardlist");
-  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>a.cost-b.cost);
+  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>(b.kind==="chest")-(a.kind==="chest")||a.cost-b.cost);
   list.innerHTML=rs.length?rs.map(r=>{
     const left=rewardLeft(r), out=left===0, poor=coins<r.cost, conf=S.confirmRedeem===r.id;
     const dis=!S.myId||!S.players[S.myId]||S.canWrite===false||out||poor;
-    return `<div class="reward"><span class="gift">${GIFT}</span><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}
+    const rar=r.kind==="chest"?"legend":rewardRar(+r.cost), chest=r.kind==="chest"&&Array.isArray(r.prizes);
+    const odds=chest?(()=>{const t=r.prizes.reduce((a,p)=>a+(+p.w||0),0);return r.prizes.map(p=>`${esc(p.n)} ${Math.round(p.w/t*100)}%`).join(" · ");})():"";
+    return `<div class="reward rar-${rar} ${chest?"is-chest":""}"><span class="rarity">${chest?"Rương bí ẩn":RARITY[rar]}</span><span class="gift">${chest?CHEST:GIFT}</span><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}${chest?`<p class="small odds">${odds}</p>`:""}
       <span class="cost">${ICON.coin}${fmt(r.cost)} xu</span>
       <span class="muted small">${left===null?"Không giới hạn":out?"Đã hết":`Còn ${left}`}</span>
-      <button class="btn ${conf?"good":"primary"} sm" data-act="redeem" data-id="${esc(r.id)}" ${dis?"disabled":""}>${out?"Hết quà":poor?`Thiếu ${fmt(r.cost-coins)} xu`:conf?"Bấm lần nữa để xác nhận":"Đổi quà"}</button></div>`;
+      <button class="btn ${conf?"good":"primary"} sm" data-act="redeem" data-id="${esc(r.id)}" ${dis?"disabled":""}>${out?"Hết quà":poor?`Thiếu ${fmt(r.cost-coins)} xu`:conf?"Bấm lần nữa để xác nhận":chest?"Mở rương":"Đổi quà"}</button></div>`;
   }).join(""):`<div class="empty" style="grid-column:1/-1">Chưa có phần thưởng. Quản lý thêm phần thưởng ở tab Quản lý.</div>`;
   const mine=S.redemptions.filter(r=>r.userId===S.myId).sort((a,b)=>b.at-a.at);
   $("#myredeem").innerHTML=mine.length?mine.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="muted small">${dateVN(r.at)} · ${fmt(r.cost)} xu</div></div>${statusChip(r.status)}</div>`).join(""):`<p class="muted small">Bạn chưa đổi quà nào.</p>`;
@@ -1174,6 +1202,7 @@ document.addEventListener("click", async ev=>{
     }
     case "close-modal": closeModal(); break;
     case "close-lvl": $("#lvlup").hidden=true; break;
+    case "close-chest": $("#chestbox").hidden=true; break;
     case "open-sale": openSale(); break;
     case "copy-payroll": {
       const tsv=["Nhân viên\tĐội\tXP tháng\tThưởng đội (đ)\tHoa hồng hẹn (đ)\tTổng (đ)",...cashPlan().map(r=>[nameOf(r.id),r.team,r.xp,Math.round(r.fund),Math.round(r.comm),Math.round(r.total)].join("\t"))].join("\n");
@@ -1225,6 +1254,12 @@ document.addEventListener("click", async ev=>{
       S.confirmRedeem=null;
       const r=S.rewards.find(x=>x.id===id); if(!r) return;
       if(stats(S.myId).coins<r.cost){ toast("Bạn chưa đủ xu."); renderShop(); return; }
+      if(r.kind==="chest"&&Array.isArray(r.prizes)&&r.prizes.length){
+        const prize=pickPrize(r.prizes);
+        await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:`${r.name}: ${prize.n}`,prize:prize.n,cost:+r.cost,status:"pending",at:Date.now()}));
+        openChest(prize, r.prizes);
+        break;
+      }
       await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:r.name,cost:+r.cost,status:"pending",at:Date.now()}),"Đã gửi yêu cầu đổi quà");
       break;
     }
@@ -1250,6 +1285,18 @@ async function setApptStatus(a,to){
     }
     await db.doc("appointments/"+id).update({status:to,doneBy:S.myId,doneAt:Date.now()});
   }, to==="closed"?`Chốt rồi! +${APPT_REWARD.book.xp+APPT_REWARD.show.xp+APPT_REWARD.close.xp} XP cho ${nameOf(a.by)}`:"Đã cập nhật lịch hẹn");
+}
+function openChest(prize,prizes){
+  const t=prizes.reduce((a,p)=>a+(+p.w||0),0), pct=prize.w/t*100;
+  const rar=pct<=3?"legend":pct<=10?"epic":pct<=25?"rare":"common";
+  const box=$("#chestbox"); box.hidden=false;
+  const m=box.querySelector(".modal"); m.className="modal levelup chest-open rar-"+rar;
+  $("#cb-prize").textContent=""; $("#cb-rar").textContent=""; $("#cb-note").textContent="Đang mở rương…";
+  setTimeout(()=>{
+    $("#cb-rar").textContent=RARITY[rar]+` · tỉ lệ ${pct.toLocaleString("vi-VN",{maximumFractionDigits:1})}%`;
+    $("#cb-prize").textContent=prize.n; $("#cb-note").textContent="Quản lý sẽ trao quà cho bạn. Xem ở Lịch sử đổi quà.";
+    m.classList.add("revealed"); confetti(rar==="legend"?260:rar==="epic"?160:80);
+  },1100);
 }
 function closeModal(){ $("#modal").hidden=true; S.submitting=null; }
 

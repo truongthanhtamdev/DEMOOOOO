@@ -4,6 +4,22 @@
  * Cả hai đều cung cấp cùng giao diện `use("db")` / `use("user")` mà app dùng. */
 (function () {
   const CFG = window.DTNV_FIREBASE_CONFIG || null;
+  window.DTNV_REWARDS_SEED = () => REWARDS;
+  const REWARDS = {
+    chest: { name: "Rương bí ẩn", cost: 120, stock: null, kind: "chest", desc: "Mở ra một phần quà ngẫu nhiên. Có cơ hội trúng Jackpot!",
+      prizes: [{ n: "Trà sữa size L", w: 35 }, { n: "Voucher Grab 50.000đ", w: 25 }, { n: "Về sớm 1 tiếng", w: 20 }, { n: "Thẻ miễn 1 lần đi trễ", w: 12 }, { n: "Nửa ngày nghỉ phép", w: 6 }, { n: "JACKPOT 500.000đ tiền mặt", w: 2 }] },
+    dj: { name: "Làm DJ văn phòng 1 ngày", cost: 60, stock: null, desc: "Cả team nghe playlist của bạn cả ngày." },
+    milktea: { name: "Ly trà sữa hoặc cà phê tuỳ chọn", cost: 80, stock: null, desc: "Order giao tận bàn." },
+    late: { name: "Thẻ miễn 1 lần đi trễ", cost: 150, stock: null, desc: "Xoá 1 lỗi đi trễ trong tháng." },
+    early: { name: "Về sớm 2 tiếng", cost: 300, stock: null, desc: "Báo quản lý trước 1 ngày." },
+    lunch: { name: "Ăn trưa 1:1 cùng anh Tâm", cost: 400, stock: null, desc: "Hỏi gì cũng được: ads, kinh doanh, sự nghiệp." },
+    coach: { name: "1 buổi coach ads 1:1 với anh Tâm", cost: 600, stock: null, desc: "Review tài khoản ads hoặc kênh cá nhân của bạn." },
+    course: { name: "Khoá quay dựng video bằng điện thoại (OT Media)", cost: 700, stock: null, desc: "Học trọn đời, có cập nhật." },
+    halfday: { name: "Nửa ngày nghỉ phép", cost: 800, stock: 5 },
+    music: { name: "1 tháng học nhạc cụ tại OT Musics", cost: 1200, stock: 3, desc: "Guitar, piano hoặc thanh nhạc." },
+    gift: { name: "Thẻ quà tặng 500.000đ", cost: 1500, stock: 3 },
+    bday: { name: "Ngày nghỉ sinh nhật + 1.000.000đ", cost: 3000, stock: 2, desc: "Chỉ Huyền thoại mới đổi được." },
+  };
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   function loginScreen(kind, errorMsg) {
@@ -39,12 +55,7 @@
     const now = Date.now();
     const seed = () => ({
       config: { settings: { teams: ["OT Musics", "Tiếng Việt", "Vận hành Ads", "Coach 1:1 Ads", "Thực tập sinh"], monthTarget: 1000, admins: [] } },
-      rewards: {
-        r1: { name: "Voucher cà phê 50.000đ", cost: 100, stock: null },
-        r2: { name: "Về sớm 2 tiếng", cost: 300, stock: null },
-        r3: { name: "Nửa ngày nghỉ phép", cost: 800, stock: 5 },
-        r4: { name: "Thẻ quà tặng 500.000đ", cost: 1500, stock: 3 },
-      },
+      rewards: window.DTNV_REWARDS_SEED(),
       quests: Object.fromEntries([
         ["m0", "Làm và đăng 2 clip ngắn (TikTok/Reels/Shorts)", "Có hook 3 giây đầu và lời kêu gọi nhắn tin. Nộp 2 link.", "daily", 20, 5, "daily", "Thực tập sinh"],
         ["m7", "Trả lời hết tin nhắn inbox, không để khách chờ quá 15 phút", "Nộp ảnh hộp thư cuối ca.", "daily", 20, 5, "daily", "Thực tập sinh"],
