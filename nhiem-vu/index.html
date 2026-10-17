@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0C0A1C">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<script src="config.js"></script>
+<script src="backend.js"></script>
+</head>
+<body>
+<title>Đấu Trường Nhiệm Vụ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Unbounded:wght@600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: game HUD — sticky bar with the player's level card, tab rail, then a "player card" hero and quest cards styled by rarity like loot */
+:root{
+  color-scheme:dark;
+  --bg:#0C0A1C; --bg-2:#141130; --surface:#1B1738; --surface-2:#262050; --line:#362D6A; --fg:#F2EFFF; --muted:#A49DCB;
+  --gold:#FFC83D; --gold-strong:#FFC83D; --gold-deep:#D9890A; --gold-soft:#3A2C10; --on-gold:#2A1600;
+  --xp:#3EE6A8; --xp-deep:#16A673; --xp-soft:#123A2E; --danger:#FF5D73; --danger-soft:#3D1724;
+  --info:#5AB8FF; --info-soft:#13294A; --boss:#FF8A3D; --boss-soft:#3D2010; --epic:#B57CFF; --epic-soft:#2B1B4D;
+  --common:#A49DCB; --rare:#5AB8FF; --legend:#FF8A3D;
+  --shadow:0 8px 24px rgba(0,0,0,.35);
+  --font-display:"Unbounded","Be Vietnam Pro",system-ui,sans-serif;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;min-height:100vh;
+  background-image:radial-gradient(900px 500px at 85% -10%,rgba(181,124,255,.22),transparent 60%),radial-gradient(700px 420px at -10% 10%,rgba(90,184,255,.14),transparent 60%),
+  linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;background-attachment:fixed}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:1.1rem;font-weight:800;letter-spacing:.01em}
+h3{font-size:.98rem;font-weight:700;font-family:var(--font-body)}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(12,10,28,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1080px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brand h1{font-size:1.1rem;font-weight:800;background:linear-gradient(90deg,var(--gold),#FFE9A8 50%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.mecard{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none;border:2px solid var(--line)}
+.avatar.ini{display:inline-grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:.75em;color:#fff;background:hsl(var(--h) 55% 42%)}
+.ring .avatar.ini{font-size:1.6rem}.pod.p1 .avatar.ini{font-size:1.2rem}
+.mebar{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.mebar .row{display:flex;justify-content:space-between;gap:10px;font-size:.8rem}
+.xpbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+.xpbar>i{display:block;height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.9,.3,1.2);
+  background:linear-gradient(90deg,var(--xp-deep),var(--xp));box-shadow:0 0 12px rgba(62,230,168,.6);position:relative;overflow:hidden}
+.xpbar>i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-100%);animation:shine 2.6s ease-in-out infinite}
+@keyframes shine{60%,100%{transform:translateX(100%)}}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:.82rem;font-weight:700;background:var(--surface-2);white-space:nowrap;border:1px solid var(--line)}
+.pill.coin{background:var(--gold-soft);color:var(--gold);border-color:rgba(255,200,61,.35)}
+.pill.flame{background:var(--danger-soft);color:#FF9A6B;border-color:rgba(255,138,61,.35)}
+.ico{width:15px;height:15px;flex:none}
+
+.tabs{max-width:1080px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:10px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--gold);border-bottom-color:var(--gold);text-shadow:0 0 14px rgba(255,200,61,.45)}
+.tabs .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--danger);color:#fff;font-size:.72rem;line-height:18px;text-align:center;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(255,93,115,0)}0%{box-shadow:0 0 0 0 rgba(255,93,115,.6)}}
+
+main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:20px}
+.section{display:flex;flex-direction:column;gap:14px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+.notice{background:var(--info-soft);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:.9rem}
+.notice.warn{background:var(--gold-soft)}
+
+/* player hero card */
+.hero-card{position:relative;overflow:hidden;border-radius:18px;padding:18px;border:1px solid rgba(255,200,61,.35);
+  background:linear-gradient(135deg,#2A1F5C 0%,#1B1738 55%,#2B1A3A 100%);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.08);
+  display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.hero-card::before{content:"";position:absolute;width:320px;height:320px;right:-80px;top:-160px;background:radial-gradient(circle,rgba(255,200,61,.25),transparent 65%);pointer-events:none}
+.ring{--p:0;position:relative;width:96px;height:96px;border-radius:50%;padding:5px;background:conic-gradient(var(--xp) calc(var(--p)*1%),rgba(255,255,255,.1) 0);box-shadow:0 0 22px rgba(62,230,168,.35)}
+.ring img,.ring .avatar{width:86px;height:86px;border:3px solid var(--bg);border-radius:50%}
+.lvlnum{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:linear-gradient(var(--gold),var(--gold-deep));color:var(--on-gold);font-family:var(--font-display);font-weight:800;font-size:.75rem;padding:3px 10px;border-radius:99px;border:2px solid var(--bg);white-space:nowrap}
+.hero-main{display:flex;flex-direction:column;gap:8px;min-width:0;position:relative}
+.hero-main .title{font-family:var(--font-display);font-weight:800;font-size:1.35rem}
+.rankname{display:inline-flex;gap:6px;align-items:center;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--gold)}
+.hero-main .xpbar{height:14px}
+.xpline{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.tiles{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}
+.tile{background:rgba(12,10,28,.55);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile b{font-family:var(--font-display);font-size:1.25rem;font-weight:800}
+.tile span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.tile.g b{color:var(--gold)}.tile.f b{color:#FF9A6B}.tile.x b{color:var(--xp)}.tile.r b{color:var(--epic)}
+.daily{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;position:relative}
+.daily .xpbar>i{background:linear-gradient(90deg,var(--gold-deep),var(--gold));box-shadow:0 0 12px rgba(255,200,61,.6)}
+
+/* segmented filter */
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:99px;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,200,61,.35)}
+
+/* quest cards = loot cards */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.quest{--rc:var(--common);position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,var(--surface)) 0%,var(--surface) 55%);
+  border:1px solid color-mix(in srgb,var(--rc) 45%,var(--line));border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0;
+  transition:transform .15s ease,box-shadow .15s ease}
+.quest:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.4),0 0 0 1px var(--rc),0 0 22px color-mix(in srgb,var(--rc) 35%,transparent)}
+.quest.rar-rare{--rc:var(--rare)}.quest.rar-epic{--rc:var(--epic)}.quest.rar-legend{--rc:var(--legend)}
+.quest.rar-legend{animation:legend 2.4s ease-in-out infinite}
+@keyframes legend{50%{box-shadow:0 0 0 1px var(--legend),0 0 26px rgba(255,138,61,.45)}}
+.q-head{display:flex;gap:10px;align-items:flex-start}
+.qicon{width:42px;height:42px;flex:none;border-radius:11px;display:grid;place-items:center;color:var(--rc);
+  background:color-mix(in srgb,var(--rc) 18%,var(--bg));border:1px solid color-mix(in srgb,var(--rc) 50%,transparent)}
+.qicon svg{width:22px;height:22px}
+.q-head .t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rarity{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--rc)}
+.q-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:var(--surface-2);color:var(--muted)}
+.chip.daily{color:var(--common)}
+.chip.weekly{background:var(--info-soft);color:var(--info)}
+.chip.team{background:var(--epic-soft);color:var(--epic)}
+.chip.boss{background:var(--legend);color:#2A0E00}
+.chip.learn{background:var(--info-soft);color:var(--info)}
+.chip.task{background:var(--epic-soft);color:var(--epic)}
+.chip.ok{background:var(--xp-soft);color:var(--xp)}
+.chip.wait{background:var(--gold-soft);color:var(--gold)}
+.chip.bad{background:var(--danger-soft);color:var(--danger)}
+.quest p{color:var(--muted);font-size:.88rem;overflow-wrap:anywhere}
+.q-foot{margin-top:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--line)}
+.rew{font-family:var(--font-mono);font-weight:700;font-size:.82rem;padding:3px 8px;border-radius:7px}
+.rew.xp{color:var(--xp);background:var(--xp-soft)} .rew.co{color:var(--gold);background:var(--gold-soft)}
+.q-foot .btn{margin-left:auto}
+.reject-note{font-size:.82rem;color:var(--danger);background:var(--danger-soft);border-radius:8px;padding:6px 8px}
+.quest.is-done{opacity:.75}
+.quest.is-done::after{content:"HOÀN THÀNH";position:absolute;right:12px;top:12px;font-family:var(--font-display);font-size:.65rem;font-weight:800;color:var(--xp);border:2px solid var(--xp);padding:2px 6px;border-radius:6px;transform:rotate(8deg)}
+
+.btn{border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:800;font-size:.88rem;cursor:pointer;background:var(--surface-2);color:var(--fg);
+  box-shadow:0 3px 0 rgba(0,0,0,.45);transition:transform .06s ease,box-shadow .06s ease,filter .15s}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.45)}
+.btn.primary{background:linear-gradient(180deg,#FFD866,var(--gold));color:var(--on-gold);border-color:var(--gold-deep);box-shadow:0 3px 0 var(--gold-deep),0 0 14px rgba(255,200,61,.25)}
+.btn.primary:active{box-shadow:0 0 0 var(--gold-deep)}
+.btn.good{background:linear-gradient(180deg,#6CF0BE,var(--xp));color:#062A1D;border-color:var(--xp-deep);box-shadow:0 3px 0 var(--xp-deep)}
+.btn.danger{background:var(--danger-soft);color:var(--danger);border-color:rgba(255,93,115,.4)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:.8rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.6)}
+
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:28px;text-align:center;color:var(--muted);font-size:.9rem;background:rgba(27,23,56,.5)}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:var(--shadow)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+
+/* leaderboard */
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tr.me td{background:rgba(255,200,61,.1)}
+.who{display:flex;align-items:center;gap:10px}
+.who .avatar{width:28px;height:28px}
+.rank{font-family:var(--font-display);font-weight:800;width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-size:.8rem;background:var(--surface-2)}
+.rank.r1{background:linear-gradient(#FFE07A,#E9A908);color:#2A1D00;box-shadow:0 0 12px rgba(255,200,61,.6)}.rank.r2{background:linear-gradient(#E6ECF2,#9EA9B4);color:#1C2228}.rank.r3{background:linear-gradient(#F0B080,#B86A32);color:#2A1404}
+
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:end}
+.pod{position:relative;background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r) var(--r) 6px 6px;padding:14px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.pod .avatar{width:52px;height:52px}
+.pod.p1{padding-block:30px 22px;border-color:var(--gold);box-shadow:0 0 30px rgba(255,200,61,.25)}
+.pod.p1 .avatar{width:68px;height:68px;border-color:var(--gold)}
+.pod .crown{width:34px;height:24px;color:var(--gold);filter:drop-shadow(0 0 6px rgba(255,200,61,.7))}
+.pod .nm{font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
+
+/* profile */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.lvl-ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--xp) calc(var(--p)*1%),var(--surface-2) 0);box-shadow:0 0 18px rgba(62,230,168,.3)}
+.lvl-ring>div{width:68px;height:68px;border-radius:50%;background:var(--surface);display:grid;place-items:center;text-align:center;font-family:var(--font-display);font-weight:800;font-size:1.3rem;line-height:1}
+.lvl-ring small{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--font-mono);font-size:1.25rem}
+.stat span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.grade{font-family:var(--font-display);font-weight:800;font-size:2.2rem;line-height:1;text-shadow:0 0 18px currentColor}
+.grade.A{color:var(--xp)}.grade.B{color:var(--info)}.grade.C{color:var(--gold)}.grade.D{color:var(--danger)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.bdg{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center;background:var(--surface)}
+.bdg .medal{width:42px;height:46px;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:.85rem;
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(#FFE07A,var(--gold-deep));color:var(--on-gold)}
+.bdg:not(.locked){border-color:rgba(255,200,61,.4);box-shadow:0 0 16px rgba(255,200,61,.12)}
+.bdg.locked{opacity:.45;filter:grayscale(1)}
+.bdg b{font-size:.85rem;display:block}.bdg span{font-size:.75rem;color:var(--muted)}
+.hist{display:flex;flex-direction:column}
+.hist>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.hist>div:last-child{border-bottom:0}
+.hist .l{min-width:0;overflow-wrap:anywhere}
+.pos{color:var(--xp)}.neg{color:var(--danger)}
+.ap-tiles{grid-column:auto}
+.total-card{border-radius:18px;padding:16px 18px;border:1px solid rgba(255,200,61,.35);background:linear-gradient(135deg,#2A1F5C,#1B1738 60%,#3A2410);display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.total-card .big{font-family:var(--font-display);font-weight:800;font-size:1.7rem;color:var(--gold)}
+.bossgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.boss-card{position:relative;background:linear-gradient(180deg,#2B1730,var(--surface) 60%);border:1px solid rgba(255,138,61,.45);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.boss-card.dead{border-color:var(--xp);background:linear-gradient(180deg,#123A2E,var(--surface) 60%)}
+.boss-top{display:flex;gap:12px;align-items:center}
+.boss-ico{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:rgba(255,138,61,.15);color:var(--legend);flex:none}
+.boss-card.dead .boss-ico{color:var(--xp);background:var(--xp-soft)}
+.boss-ico svg{width:28px;height:28px}
+.boss-name{font-family:var(--font-display);font-weight:800;font-size:1rem}
+.hp{position:relative;height:22px;border-radius:8px;background:#3A1420;overflow:visible;border:1px solid rgba(255,93,115,.35)}
+.hp>i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:linear-gradient(90deg,var(--gold-deep),var(--gold),#FFF2C2);box-shadow:0 0 14px rgba(255,200,61,.5);transition:width 1s cubic-bezier(.2,.9,.3,1.1)}
+.hp>b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-mono);font-size:.78rem;font-weight:700;color:#fff;text-shadow:0 1px 2px #000}
+.hp .mk{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg);opacity:.7}
+.hp .mk span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.65rem;font-weight:800;color:var(--muted);white-space:nowrap}
+.hp .mk.hit{background:var(--xp);opacity:1}.hp .mk.hit span{color:var(--xp)}
+.boss-stats{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.82rem}
+.boss-stats b{font-family:var(--font-mono)}
+.tierrow{display:flex;gap:6px;flex-wrap:wrap}
+.tier{font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--muted)}
+.tier.hit{background:var(--xp-soft);color:var(--xp)}
+.policy td,.policy th{white-space:normal}
+.ap-when{font-family:var(--font-mono);font-weight:700;color:var(--gold);font-size:.85rem}
+.ap-when.late{color:var(--danger)}
+.funnel{display:flex;gap:4px;align-items:center;font-family:var(--font-mono);font-size:.82rem;white-space:nowrap}
+
+/* rewards = shop items */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.reward{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.reward{--rc:var(--common);border-color:color-mix(in srgb,var(--rc) 45%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,var(--surface)),var(--surface) 60%);transition:transform .15s ease,box-shadow .15s ease}
+.reward:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.4),0 0 0 1px var(--rc),0 0 22px color-mix(in srgb,var(--rc) 35%,transparent)}
+.reward.rar-rare,.modal.rar-rare{--rc:var(--rare)}.reward.rar-epic,.modal.rar-epic{--rc:var(--epic)}.reward.rar-legend,.modal.rar-legend{--rc:var(--legend)}.modal.rar-common{--rc:var(--common)}
+.reward .rarity{color:var(--rc)}
+.reward .gift{color:var(--rc)!important;background:color-mix(in srgb,var(--rc) 18%,var(--bg))!important}
+.reward.is-chest{grid-column:1/-1;flex-direction:column;animation:legend 2.4s ease-in-out infinite}
+.reward .odds{color:var(--muted);line-height:1.6}
+.cb-chest{width:110px;height:110px;color:var(--gold);filter:drop-shadow(0 0 18px rgba(255,200,61,.6))}
+.cb-chest svg{width:100%;height:100%}
+.chest-open:not(.revealed) .cb-chest{animation:shake .25s ease-in-out infinite}
+.chest-open.revealed .cb-chest{color:var(--rc);animation:popin .4s cubic-bezier(.2,.9,.3,1.4)}
+.chest-open.revealed{border-color:var(--rc);box-shadow:0 0 60px color-mix(in srgb,var(--rc) 45%,transparent)}
+.chest-open .rarity{color:var(--rc);font-size:.8rem}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.04)}75%{transform:rotate(8deg) scale(1.04)}}
+.reward .gift{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold)}
+.reward .gift svg{width:26px;height:26px}
+.reward .cost{font-family:var(--font-display);font-weight:800;color:var(--gold);font-size:1.15rem;display:flex;align-items:center;gap:6px}
+.reward .btn{width:100%;margin-top:auto}
+
+/* forms */
+form{display:flex;flex-direction:column;gap:10px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:70px}
+.list{display:flex;flex-direction:column}
+.list>.item{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.list>.item:last-child{border-bottom:0}
+.item .l{min-width:0;flex:1 1 220px;overflow-wrap:anywhere}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.item .acts input{width:170px}
+
+/* modal, toast, effects */
+.overlay{position:fixed;inset:0;background:rgba(5,4,14,.72);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:50}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--gold);color:var(--fg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-shadow:0 0 20px rgba(255,200,61,.25)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70;width:100%;height:100%}
+.float-xp{position:fixed;z-index:71;pointer-events:none;font-family:var(--font-display);font-weight:800;font-size:1.6rem;color:var(--xp);text-shadow:0 0 16px rgba(62,230,168,.8);animation:floatup 1.6s ease-out forwards}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-90px) scale(1)}}
+.levelup{text-align:center;align-items:center;border-color:var(--gold);box-shadow:0 0 60px rgba(255,200,61,.35);animation:popin .5s cubic-bezier(.2,.9,.3,1.4)}
+.levelup .big{font-family:var(--font-display);font-weight:800;font-size:2.2rem;line-height:1.1;background:linear-gradient(90deg,var(--gold),#FFF2C2,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.levelup .lv{font-family:var(--font-display);font-weight:800;font-size:4rem;color:var(--gold);text-shadow:0 0 30px rgba(255,200,61,.8);line-height:1}
+@keyframes popin{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:560px){.mecard{margin-left:0;width:100%}.mebar{flex:1}.podium{gap:6px}.hero{grid-template-columns:1fr;justify-items:start}
+  .tiles{grid-template-columns:repeat(2,1fr)}.hero-card{gap:14px}.ring{width:80px;height:80px}.ring img,.ring .avatar{width:70px;height:70px}.hero-main .title{font-size:1.1rem}}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span>Hệ thống thi đua nội bộ</span><h1>Đấu Trường Nhiệm Vụ</h1></div>
+    <div class="mecard" id="mecard"></div>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="quests" aria-selected="true">Nhiệm vụ</button>
+    <button role="tab" data-tab="appts" aria-selected="false" id="tab-appts">Lịch hẹn</button>
+    <button role="tab" data-tab="sales" aria-selected="false">Doanh số</button>
+    <button role="tab" data-tab="board" aria-selected="false">Bảng xếp hạng</button>
+    <button role="tab" data-tab="shop" aria-selected="false">Đổi quà</button>
+    <button role="tab" data-tab="me" aria-selected="false">Hồ sơ của tôi</button>
+    <button role="tab" data-tab="admin" aria-selected="false" hidden id="tab-admin">Quản lý</button>
+  </nav>
+</header>
+
+<main>
+  <div id="status"></div>
+  <div id="join"></div>
+
+  <!-- QUESTS -->
+  <section class="section" data-view="quests">
+    <div id="herocard"></div>
+    <div class="section-head">
+      <h2>Nhiệm vụ của bạn</h2>
+      <div class="seg" id="qfilter">
+        <button data-f="todo" aria-pressed="true">Cần làm</button>
+        <button data-f="pending" aria-pressed="false">Chờ duyệt</button>
+        <button data-f="done" aria-pressed="false">Đã xong</button>
+      </div>
+    </div>
+    <div id="questlist" class="qgrid"></div>
+  </section>
+
+  <!-- APPOINTMENTS -->
+  <section class="section" data-view="appts" hidden>
+    <div class="section-head"><h2>Lịch hẹn tư vấn</h2><span class="muted small" id="ap-legend"></span></div>
+    <div class="tiles ap-tiles" id="ap-tiles"></div>
+    <div class="cols">
+      <div class="panel" id="ap-formwrap">
+        <h2>Đặt lịch hẹn mới</h2>
+        <form id="f-appt">
+          <div class="field"><label for="ap-kind">Loại lịch hẹn</label><select id="ap-kind"><option value="call">Call tư vấn với anh Tâm</option><option value="trial">Học thử lớp âm nhạc</option></select></div>
+          <div class="frow">
+            <div class="field"><label for="ap-name">Tên khách hàng</label><input id="ap-name" required maxlength="80" placeholder="VD: Chị Hoa, shop mỹ phẩm"></div>
+            <div class="field"><label for="ap-contact">SĐT / Zalo / link Facebook</label><input id="ap-contact" maxlength="120"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="ap-time">Thời gian call / học thử</label><input id="ap-time" type="datetime-local" required></div>
+            <div class="field"><label for="ap-product">Khách quan tâm</label><select id="ap-product"></select></div>
+            <div class="field"><label for="ap-source">Nguồn khách</label>
+              <select id="ap-source"><option>Facebook Ads</option><option>TikTok</option><option>Zalo</option><option>Inbox fanpage</option><option>Người quen giới thiệu</option><option>Khác</option></select></div>
+          </div>
+          <div class="field"><label for="ap-note">Ghi chú cho người chốt (nhu cầu, ngân sách, nỗi đau)</label><textarea id="ap-note" maxlength="600" placeholder="VD: Đang chạy ads tự học, CPA cao, ngân sách 10 triệu/tháng"></textarea></div>
+          <button class="btn primary" type="submit">Đặt lịch · +10 XP</button>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="section-head"><h2>Bảng vàng đặt hẹn tháng này</h2></div>
+        <div id="ap-board" class="list"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="section-head"><h2 id="ap-list-title">Lịch hẹn</h2>
+        <div class="seg" id="apfilter"><button data-f="upcoming" aria-pressed="true">Chờ xử lý</button><button data-f="done" aria-pressed="false">Đã xử lý</button></div></div>
+      <div id="ap-list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- SALES -->
+  <section class="section" data-view="sales" hidden>
+    <div class="section-head"><h2 id="sl-title">Boss doanh số tháng</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="muted small" id="sl-days"></span><button class="btn primary sm" data-act="open-sale" id="sl-add" hidden>Ghi nhận doanh số</button></div></div>
+    <div class="total-card" id="sl-total"></div>
+    <div class="bossgrid" id="sl-bosses"></div>
+    <div class="cols">
+      <div class="panel"><h2>Người mang về doanh số</h2><div id="sl-people" class="list"></div></div>
+      <div class="panel"><h2>Hợp đồng khách mới gần đây</h2><div id="sl-recent" class="list"></div></div>
+    </div>
+    <div class="panel" id="sl-policy"></div>
+    <div class="panel" id="sl-payroll" hidden></div>
+    <div class="panel" id="sl-settings" hidden>
+      <h2>Chỉ tiêu doanh số tháng (khách hàng mới)</h2>
+      <form id="f-targets"><div class="frow" id="tg-fields"></div><button class="btn primary" type="submit">Lưu chỉ tiêu</button></form>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="section" data-view="board" hidden>
+    <div class="section-head">
+      <h2>Bảng xếp hạng</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="seg" id="lbperiod"><button data-p="month" aria-pressed="true">Tháng này</button><button data-p="all" aria-pressed="false">Toàn thời gian</button></div>
+        <div class="seg" id="lbmode"><button data-m="person" aria-pressed="true">Cá nhân</button><button data-m="team" aria-pressed="false">Đội / Cửa hàng</button></div>
+      </div>
+    </div>
+    <div id="podium" class="podium"></div>
+    <div id="lbtable" class="tablewrap"></div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="section" data-view="shop" hidden>
+    <div class="section-head"><h2>Cửa hàng phần thưởng</h2><span class="pill coin" id="shopcoins"></span></div>
+    <div id="rewardlist" class="rgrid"></div>
+    <h2 style="margin-top:8px">Lịch sử đổi quà</h2>
+    <div class="panel"><div id="myredeem" class="list"></div></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="section" data-view="me" hidden>
+    <div class="cols">
+      <div class="panel" id="profilehero"></div>
+      <div class="panel" id="kpicard"></div>
+    </div>
+    <h2>Huy hiệu</h2>
+    <div id="badgelist" class="badges"></div>
+    <h2>Lịch sử điểm</h2>
+    <div class="panel"><div id="history" class="hist"></div></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="section" data-view="admin" hidden>
+    <div class="cols">
+      <div class="panel">
+        <div class="section-head"><h2>Chờ duyệt nhiệm vụ</h2><span class="pill" id="pendcount">0</span></div>
+        <div id="approvals" class="list"></div>
+      </div>
+      <div class="panel">
+        <div class="section-head"><h2>Yêu cầu đổi quà</h2><span class="pill" id="redcount">0</span></div>
+        <div id="redeemreqs" class="list"></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Giao nhiệm vụ mới</h2>
+        <form id="f-quest">
+          <div class="field"><label for="q-tpl">Chọn từ thư viện nhiệm vụ mẫu</label><select id="q-tpl"></select></div>
+          <div class="field"><label for="q-title">Tên nhiệm vụ</label><input id="q-title" required maxlength="120" placeholder="VD: Chốt 3 đơn trả góp trong ngày"></div>
+          <div class="field"><label for="q-desc">Mô tả / tiêu chí hoàn thành</label><textarea id="q-desc" maxlength="600" placeholder="Nhân viên cần nộp gì để được duyệt?"></textarea></div>
+          <div class="frow">
+            <div class="field"><label for="q-type">Loại</label><select id="q-type"></select></div>
+            <div class="field"><label for="q-xp">XP</label><input id="q-xp" type="number" min="0" step="5" required></div>
+            <div class="field"><label for="q-coins">Xu</label><input id="q-coins" type="number" min="0" step="1" required></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="q-mode">Giao cho</label>
+              <select id="q-mode"><option value="all">Tất cả nhân viên</option><option value="dept">Từng người trong một đội</option><option value="team">Cả đội cùng làm</option><option value="person">Một người</option></select></div>
+            <div class="field" id="q-assignee-wrap" hidden><label for="q-assignee">Nhân viên</label><select id="q-assignee"></select></div>
+            <div class="field" id="q-team-wrap" hidden><label for="q-team">Đội</label><select id="q-team"></select></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="q-repeat">Lặp lại</label>
+              <select id="q-repeat"><option value="none">Một lần</option><option value="daily">Mỗi ngày</option><option value="weekly">Mỗi tuần</option></select></div>
+            <div class="field"><label for="q-due">Hạn chót (tuỳ chọn)</label><input id="q-due" type="date"></div>
+          </div>
+          <button class="btn primary" type="submit">Giao nhiệm vụ</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Thưởng nóng / Trừ điểm</h2>
+        <form id="f-adjust">
+          <div class="field"><label for="a-user">Nhân viên</label><select id="a-user" required></select></div>
+          <div class="field"><label for="a-preset">Lý do mẫu</label><select id="a-preset"></select></div>
+          <div class="field"><label for="a-reason">Ghi chú lý do</label><input id="a-reason" required maxlength="160"></div>
+          <div class="frow">
+            <div class="field"><label for="a-xp">XP (+/−)</label><input id="a-xp" type="number" step="5" required></div>
+            <div class="field"><label for="a-coins">Xu (+/−)</label><input id="a-coins" type="number" step="1" value="0" required></div>
+          </div>
+          <button class="btn primary" type="submit">Ghi nhận</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-head"><h2>Nhiệm vụ đang chạy</h2><span class="muted small">Lưu trữ nhiệm vụ để ẩn khỏi danh sách nhân viên</span></div>
+      <div id="activequests" class="list"></div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Phần thưởng</h2>
+        <form id="f-reward">
+          <div class="field"><label for="r-name">Tên phần thưởng</label><input id="r-name" required maxlength="80" placeholder="VD: Trà sữa Phúc Long size M"></div>
+          <div class="frow">
+            <div class="field"><label for="r-value">Giá trị (nghìn đồng)</label><input id="r-value" type="number" min="1" required placeholder="VD: 45"></div>
+            <div class="field"><label for="r-cost">Giá (xu, để trống = tự tính)</label><input id="r-cost" type="number" min="1"></div>
+            <div class="field"><label for="r-stock">Số lượng (để trống = không giới hạn)</label><input id="r-stock" type="number" min="0"></div>
+          </div>
+          <button class="btn primary" type="submit">Thêm phần thưởng</button>
+        </form>
+        <div id="rewardadmin" class="list"></div>
+      </div>
+      <div class="panel">
+        <h2>Nhân viên &amp; cài đặt</h2>
+        <form id="f-settings">
+          <div class="field"><label for="s-teams">Danh sách đội / mảng kinh doanh (mỗi dòng một tên)</label><textarea id="s-teams"></textarea></div>
+          <div class="field"><label for="s-target">Chỉ tiêu XP mỗi tháng (dùng để xếp loại A/B/C/D)</label><input id="s-target" type="number" min="1" required></div>
+          <button class="btn primary" type="submit">Lưu cài đặt</button>
+        </form>
+        <div id="playeradmin" class="list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="modal" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h2 id="m-title">Nộp nhiệm vụ</h2>
+    <p class="muted small" id="m-desc"></p>
+    <div class="field"><label for="m-proof">Báo cáo kết quả</label><textarea id="m-proof" maxlength="600" placeholder="VD: Đã chốt 3 đơn: #1023, #1027, #1031"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn ghost" data-act="close-modal">Huỷ</button>
+      <button class="btn primary" data-act="confirm-submit">Nộp để duyệt</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="chestbox" class="overlay" hidden>
+  <div class="modal levelup" role="dialog" aria-modal="true" aria-labelledby="cb-prize">
+    <span class="cb-chest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1H3z" fill="currentColor" fill-opacity=".25"/><path d="M3 11h18v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="10" y="9.5" width="4" height="4.5" rx="1" fill="currentColor"/></svg></span>
+    <span class="rarity" id="cb-rar"></span>
+    <span class="big" id="cb-prize"></span>
+    <p class="muted small" id="cb-note"></p>
+    <button class="btn primary" data-act="close-chest">Tuyệt vời!</button>
+  </div>
+</div>
+<div id="salemodal" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sm-title">
+    <h2 id="sm-title">Ghi nhận doanh số khách mới</h2>
+    <p class="muted small" id="sm-sub"></p>
+    <form id="f-sale">
+      <div class="frow">
+        <div class="field"><label for="sl-line">Mảng kinh doanh</label><select id="sl-line"></select></div>
+        <div class="field"><label for="sl-amount">Giá trị hợp đồng (triệu đồng)</label><input id="sl-amount" type="number" min="0.1" step="0.1" required placeholder="VD: 15"></div>
+      </div>
+      <div class="field"><label for="sl-customer">Khách hàng</label><input id="sl-customer" required maxlength="80"></div>
+      <div class="field"><label for="sl-by">Ghi công cho (người đặt hẹn / mang khách về)</label><select id="sl-by"></select></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" type="button" data-act="close-sale">Huỷ</button><button class="btn good" type="submit">Lưu doanh số</button></div>
+    </form>
+  </div>
+</div>
+<div id="lvlup" class="overlay" hidden>
+  <div class="modal levelup" role="dialog" aria-modal="true" aria-labelledby="lu-title">
+    <span class="big" id="lu-title">LÊN CẤP!</span>
+    <span class="lv num" id="lu-num">2</span>
+    <b id="lu-name"></b>
+    <p class="muted small" id="lu-next"></p>
+    <button class="btn primary" data-act="close-lvl">Tiếp tục chiến!</button>
+  </div>
+</div>
+
+<script>
+const TYPES = {
+  daily:  {label:"Hằng ngày", xp:20,  coins:5,   rar:"common"},
+  weekly: {label:"Hằng tuần", xp:150, coins:30,  rar:"rare"},
+  task:   {label:"Giao việc", xp:80,  coins:15,  rar:"epic"},
+  learn:  {label:"Học tập",   xp:50,  coins:10,  rar:"rare"},
+  team:   {label:"Tập thể",   xp:200, coins:40,  rar:"epic"},
+  boss:   {label:"Boss",      xp:500, coins:100, rar:"legend"},
+};
+const RARITY = {common:"Thường", rare:"Hiếm", epic:"Sử thi", legend:"Huyền thoại"};
+const QICON = {
+  daily:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  weekly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 15l2.5 2.5L16 13"/></svg>',
+  task:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  learn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 6.5 12 3l10 3.5L12 10z"/><path d="M6 8.5V14c0 1.7 2.7 3 6 3s6-1.3 6-3V8.5M22 6.5V12"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.4 0 4 1.5 4.5 4"/></svg>',
+  boss:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 2 4 5.6 4 10c0 2.6 1.2 4.4 3 5.6V19a1 1 0 0 0 1 1h1.5v-2h1.5v2h2v-2h1.5v2H16a1 1 0 0 0 1-1v-3.4c1.8-1.2 3-3 3-5.6 0-4.4-3-8-8-8zm-3.5 11a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>',
+};
+const GIFT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-1-3-5-4-5-1.5S10 8 12 8zm0 0c1-3 5-4 5-1.5S14 8 12 8z"/></svg>';
+const CHEST='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1H3z" fill="currentColor" fill-opacity=".25"/><path d="M3 11h18v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><rect x="10" y="9.5" width="4" height="4.5" rx="1" fill="currentColor"/></svg>';
+const XU_VND = 500;  // quy đổi: 1 xu ≈ 500đ (100 xu = 50.000đ)
+const vnd = v => fmt(Math.round(+v||0))+"đ";
+const rewardRar = c => c<200?"common":c<600?"rare":c<1500?"epic":"legend";
+function pickPrize(prizes){ const tot=prizes.reduce((a,p)=>a+(+p.w||0),0); let r=Math.random()*tot; for(const p of prizes){ r-=+p.w||0; if(r<0) return p; } return prizes[prizes.length-1]; }
+const CROWN='<svg class="crown" viewBox="0 0 34 24" fill="currentColor"><path d="M2 6l7 7 8-11 8 11 7-7-3 16H5z"/></svg>';
+const LEVELS = [
+  {n:"Tân binh", min:0}, {n:"Chiến binh", min:500}, {n:"Tinh anh", min:1500},
+  {n:"Cao thủ", min:3000}, {n:"Huyền thoại", min:6000},
+];
+const BADGES = [
+  {k:"1",  n:"Khởi đầu",        d:"Hoàn thành nhiệm vụ đầu tiên",          t:s=>s.done>=1},
+  {k:"10", n:"Chăm chỉ",        d:"Hoàn thành 10 nhiệm vụ",                 t:s=>s.done>=10},
+  {k:"50", n:"Cỗ máy",          d:"Hoàn thành 50 nhiệm vụ",                 t:s=>s.done>=50},
+  {k:"B",  n:"Hạ Boss",         d:"Hoàn thành một nhiệm vụ Boss",           t:s=>s.boss>=1},
+  {k:"H",  n:"Ham học",         d:"Hoàn thành 3 nhiệm vụ học tập",          t:s=>s.learn>=3},
+  {k:"Đ",  n:"Đồng đội",        d:"Góp công 3 nhiệm vụ tập thể",            t:s=>s.team>=3},
+  {k:"7",  n:"Bền bỉ",          d:"Chuỗi 7 ngày liên tiếp có nhiệm vụ",     t:s=>s.bestStreak>=7},
+  {k:"H1", n:"Mở cửa",          d:"Đặt lịch hẹn đầu tiên",                  t:s=>s.apBook>=1},
+  {k:"10", n:"Người mở cửa",    d:"10 khách đến tư vấn từ lịch bạn đặt",    t:s=>s.apShow>=10},
+  {k:"$",  n:"Mở hàng",         d:"Lịch hẹn của bạn được chốt lần đầu",     t:s=>s.apClose>=1},
+  {k:"✓",  n:"Sạch lỗi",        d:"Tháng này ≥5 nhiệm vụ, không bị trừ điểm", t:s=>s.penMonth===0&&s.doneMonth>=5},
+];
+/* Thư viện nhiệm vụ mẫu theo mảng: [loại, tên, mô tả, lặp lại, kiểu giao]
+   kiểu giao: "dept" = từng người trong đội tự làm, "team" = cả đội cùng làm và cùng nhận thưởng */
+const LIBRARY = {
+  "OT Musics": [
+    ["daily","Đăng 1 video/short nhạc lên kênh","Đúng lịch đăng, có tiêu đề, hashtag và thumbnail chuẩn. Nộp link bài đăng.","daily","dept"],
+    ["daily","Trả lời bình luận và tin nhắn của fan trong ngày","Không để tin nhắn quá 24 giờ chưa trả lời.","daily","dept"],
+    ["weekly","Hoàn thành bản mix/master đúng hạn","Nộp link file và ghi chú các chỉnh sửa chính.","weekly","dept"],
+    ["weekly","Báo cáo lượt nghe/view tuần và đề xuất cải thiện","Số liệu từ YouTube Studio/Spotify for Artists, kèm 2 đề xuất.","weekly","dept"],
+    ["task","Phát hành 1 bài lên Spotify/Apple Music","Đủ metadata, artwork, lyric; nộp link phát hành.","none","dept"],
+    ["learn","Học xong 1 bài kỹ thuật âm thanh/mix mới","Nộp tên bài học và 3 điều áp dụng được.","none","dept"],
+    ["team","Kênh đạt chỉ tiêu lượt nghe tháng","Cả đội cùng nhận thưởng khi kênh đạt mục tiêu.","none","team"],
+    ["boss","Video nhạc đạt 100.000 view trong 30 ngày","Nộp ảnh chụp số liệu. Phần thưởng lớn cho người hạ Boss.","none","dept"],
+  ],
+  "Tiếng Việt": [
+    ["daily","Chấm và phản hồi bài tập học viên trong 24 giờ","Nộp số bài đã chấm trong ngày.","daily","dept"],
+    ["daily","Đăng 1 nội dung dạy tiếng Việt lên fanpage/TikTok","Nộp link bài đăng.","daily","dept"],
+    ["weekly","Gọi chăm sóc học viên vắng học hoặc chậm tiến độ","Ghi tên học viên đã gọi và kết quả.","weekly","dept"],
+    ["weekly","Tỷ lệ học viên đi học từ 90% trở lên trong tuần","Nộp bảng điểm danh tuần.","weekly","dept"],
+    ["task","Soạn giáo án và slide cho 1 buổi học mới","Nộp link giáo án để quản lý duyệt.","none","dept"],
+    ["learn","Dự giờ 1 buổi của giáo viên khác và ghi nhận xét","Nộp 3 điểm học được và 1 góp ý.","none","dept"],
+    ["team","Tuyển đủ chỉ tiêu học viên cho khoá mới","Cả đội cùng nhận thưởng khi đủ sĩ số.","none","team"],
+    ["boss","Mở thành công 1 lớp mới đủ sĩ số","Nộp danh sách học viên đã đóng học phí.","none","dept"],
+  ],
+  "Vận hành Ads": [
+    ["daily","Kiểm tra ngân sách và tắt quảng cáo lỗ trước 10 giờ","Nộp danh sách camp đã tắt/điều chỉnh.","daily","dept"],
+    ["daily","Cập nhật báo cáo chi tiêu, CPA, ROAS vào sheet","Đủ số liệu của tất cả tài khoản đang chạy.","daily","dept"],
+    ["weekly","Test 3 mẫu content/creative mới","Nộp link 3 mẫu và kết quả CTR/CPA sau 3 ngày.","weekly","dept"],
+    ["weekly","Gửi báo cáo tuần cho khách hàng đúng hạn","Đúng mẫu báo cáo, gửi trước 18 giờ thứ Hai.","weekly","dept"],
+    ["task","Lên camp mới cho khách, đủ pixel và tracking","Kiểm tra sự kiện chuyển đổi chạy đúng trước khi bật.","none","dept"],
+    ["learn","Cập nhật chính sách hoặc tính năng mới của Meta Ads","Tóm tắt 1 thay đổi và cách áp dụng cho khách.","none","dept"],
+    ["team","Cả đội đạt ROAS mục tiêu tháng","Tính trên toàn bộ tài khoản đang quản lý.","none","team"],
+    ["boss","Scale 1 chiến dịch lên x2 ngân sách mà giữ được CPA","Nộp ảnh số liệu trước và sau khi scale.","none","dept"],
+  ],
+  "Thực tập sinh": [
+    ["daily","Trả lời hết tin nhắn inbox, không để khách chờ quá 15 phút","Trong giờ làm. Nộp ảnh hộp thư cuối ca (không còn tin chưa đọc).","daily","dept"],
+    ["daily","Xin được SĐT/Zalo của 5 khách nhắn tin","Ghi tên khách và nhu cầu để chăm sóc tiếp.","daily","dept"],
+    ["daily","Làm và đăng 2 clip ngắn (TikTok/Reels/Shorts)","Đúng kịch bản đã duyệt, có hook 3 giây đầu và lời kêu gọi nhắn tin. Nộp 2 link.","daily","dept"],
+    ["daily","Đặt 3 lịch call với anh Tâm hoặc học thử lớp âm nhạc","Đặt ở tab Lịch hẹn. Mỗi lịch hẹn còn được cộng điểm và hoa hồng riêng khi khách đến và khi chốt.","daily","dept"],
+    ["weekly","Có 1 clip đạt 10.000 view trong tuần","Nộp link clip và ảnh số liệu.","weekly","dept"],
+    ["weekly","Tỷ lệ inbox thành lịch hẹn đạt 10% trong tuần","Số lịch hẹn chia cho số khách nhắn tin mới. Nộp số liệu.","weekly","dept"],
+    ["weekly","Có 10 khách đến tư vấn trong tuần","Tính theo lịch hẹn được đánh dấu khách đến.","weekly","dept"],
+    ["learn","Học kịch bản trả lời tin nhắn và xử lý từ chối","Ghi âm 1 cuộc tập với quản lý.","none","dept"],
+    ["learn","Phân tích 3 clip viral cùng ngành và làm lại theo format","Nộp link 3 clip gốc và clip bạn làm.","none","dept"],
+    ["boss","Clip viral 100.000 view","Nộp link và ảnh số liệu. Phần thưởng lớn cho người hạ Boss.","none","dept"],
+    ["boss","Lịch hẹn của bạn được chốt 5 hợp đồng trong tháng","Phần thưởng lớn cho người đặt hẹn xuất sắc nhất.","none","dept"],
+  ],
+  "Coach 1:1 Ads": [
+    ["daily","Trả lời câu hỏi học viên trong nhóm trong 4 giờ","Không để câu hỏi nào quá 4 giờ giờ hành chính.","daily","dept"],
+    ["weekly","Hoàn thành đủ buổi coach 1:1 theo lịch","Nộp danh sách buổi đã coach và ghi chú.","weekly","dept"],
+    ["weekly","Review tài khoản ads của học viên và gửi nhận xét","Mỗi học viên ít nhất 1 lần/tuần.","weekly","dept"],
+    ["task","Tư vấn và chốt 1 học viên coach mới","Nộp tên học viên và gói đã đăng ký.","none","dept"],
+    ["task","Thu feedback và đánh giá sao từ học viên vừa xong khoá","Nộp ảnh feedback.","none","dept"],
+    ["learn","Cập nhật giáo trình coach theo thay đổi mới của nền tảng","Nộp phần giáo trình đã sửa.","none","dept"],
+    ["team","Đạt chỉ tiêu doanh số khoá coach tháng","Cả đội cùng nhận thưởng.","none","team"],
+    ["boss","Học viên đạt kết quả nổi bật và đồng ý làm case study","Nộp số liệu trước/sau của học viên.","none","dept"],
+  ],
+};
+/* Lịch hẹn: thực tập sinh đặt hẹn, anh Tâm tư vấn và chốt. Mỗi bước đạt được cộng điểm cho người đặt hẹn. */
+const APPT_REWARD = { book:{xp:10,coins:2,label:"Đặt lịch hẹn"}, show:{xp:30,coins:5,label:"Buổi call/học thử diễn ra"}, close:{xp:150,coins:50,label:"Chốt thành công"} };
+const APPT_CASH = { show:25000, closePct:3 };  // hoa hồng tiền cho người đặt hẹn: mỗi buổi call/học thử diễn ra + % hợp đồng chốt
+const APPT_KINDS = { call:{label:"Call tư vấn với anh Tâm", product:"Coach 1:1 Ads"}, trial:{label:"Học thử lớp âm nhạc", product:"OT Musics"} };
+const APPT_STEPS = { noshow:["book"], showed:["book","show"], closed:["book","show","close"], booked:[] };
+const APPT_STATUS = { booked:["Đã đặt hẹn","wait"], noshow:["Khách không đến","bad"], showed:["Đã diễn ra, chưa chốt","ok"], closed:["Đã chốt","ok"] };
+const CLOSER = "anh Tâm";
+
+/* Doanh số khách hàng mới theo mảng (VNĐ/tháng), đội nào góp vào mảng nào, và các mốc thưởng.
+   fund = % doanh số trích quỹ thưởng tiền cho đội khi đạt mốc; xp/coins = thưởng trong game cho từng thành viên. */
+const DEFAULT_TARGETS = { "OT Musics":400e6, "OT Media":400e6, "Tiếng Việt":210e6 };
+const DEFAULT_LINE_TEAMS = { "OT Musics":["OT Musics"], "OT Media":["Vận hành Ads","Coach 1:1 Ads","Thực tập sinh"], "Tiếng Việt":["Tiếng Việt"] };
+const DEFAULT_TIERS = [ {pct:80,fund:2,xp:200,coins:50}, {pct:100,fund:3,xp:500,coins:150}, {pct:120,fund:4,xp:1000,coins:300} ];
+const targets = () => S.config.targets || DEFAULT_TARGETS;
+const lineTeams = () => S.config.lineTeams || DEFAULT_LINE_TEAMS;
+const tiers = () => S.config.tiers || DEFAULT_TIERS;
+function lineOfProduct(p){ if(targets()[p]) return p; for(const [l,ts] of Object.entries(lineTeams())) if(ts.includes(p)) return l; return Object.keys(targets())[0]; }
+function membersOf(line){ const ts=lineTeams()[line]||[]; return Object.entries(S.players).filter(([,p])=>ts.includes(p.team)).map(([id])=>id); }
+function money(v){ v=+v||0; return v>=1e9?(v/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":(v/1e6).toLocaleString("vi-VN",{maximumFractionDigits:1})+" tr"; }
+function cash(v){ v=+v||0; return v<1e6?fmt(Math.round(v/1000))+"k":money(v); }
+function commissionOf(uid,mk=monthKey()){
+  const shows=S.appts.filter(a=>a.by===uid&&(a.status==="showed"||a.status==="closed")&&monthKey(a.doneAt||a.createdAt)===mk).length;
+  const closedV=S.sales.filter(x=>x.by===uid&&x.apptId&&monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0);
+  const show=shows*APPT_CASH.show, close=closedV*APPT_CASH.closePct/100;
+  return {shows, closedV, show, close, total:show+close};
+}
+/* Bảng thưởng tiền tháng: quỹ đội của mốc cao nhất đã đạt, chia 30% đều + 70% theo XP tháng; cộng hoa hồng đặt hẹn. */
+function cashPlan(){
+  const rows={}, row=id=>rows[id]??={id,team:S.players[id]?.team||"",xp:stats(id).xpMonth,fund:0,comm:0};
+  for(const [line,t] of Object.entries(targets())){
+    const act=lineTotal(line), pct=t?act/t*100:0, hit=tiers().filter(x=>pct>=x.pct);
+    const mem=membersOf(line); if(!hit.length||!mem.length) continue;
+    const fund=act*hit[hit.length-1].fund/100, xs=mem.map(id=>Math.max(0,stats(id).xpMonth)), sx=xs.reduce((a,b)=>a+b,0);
+    mem.forEach((id,i)=>{ row(id).fund+=fund*0.3/mem.length+(sx?fund*0.7*xs[i]/sx:fund*0.7/mem.length); });
+  }
+  for(const id of new Set(S.appts.map(a=>a.by))){ const c=commissionOf(id).total; if(c) row(id).comm+=c; }
+  return Object.values(rows).map(r=>({...r,total:r.fund+r.comm})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
+}
+function lineTotal(line,mk=monthKey()){ return S.sales.filter(x=>x.line===line&&monthKey(x.at)===mk).reduce((a,x)=>a+(+x.amount||0),0); }
+const PRESETS = [
+  {label:"Thưởng nóng: khách hàng khen", xp:50, coins:20},
+  {label:"Thưởng nóng: vượt chỉ tiêu ngày", xp:100, coins:30},
+  {label:"Trừ điểm: đi trễ", xp:-20, coins:0},
+  {label:"Trừ điểm: sai quy trình (SOP)", xp:-30, coins:0},
+  {label:"Trừ điểm: khách hàng phàn nàn", xp:-50, coins:-10},
+  {label:"Khác", xp:0, coins:0},
+];
+
+const S = {
+  db:null, user:null, myId:null, isMgr:false, canWrite:null, ready:false,
+  quests:[], ledger:[], appts:[], apF:"upcoming", sales:[], saleCtx:null, rewards:[], redemptions:[], players:{}, config:{teams:Object.keys(LIBRARY), monthTarget:1000},
+  profiles:{}, tab:"quests", qf:"todo", lbPeriod:"month", lbMode:"person",
+  submitting:null, confirmRedeem:null, rejecting:{},
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const fmt = n => new Intl.NumberFormat("vi-VN").format(n);
+const signed = n => (n>0?"+":"") + fmt(n);
+function dayKey(t=Date.now()){const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function monthKey(t=Date.now()){const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1);}
+function weekKey(t=Date.now()){
+  const d=new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const w1=new Date(d.getFullYear(),0,4);
+  return d.getFullYear()+"-W"+pad(1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7));
+}
+function daysBetween(a,b){return Math.round((new Date(b+"T00:00")-new Date(a+"T00:00"))/864e5);}
+function hash(s){let h=2166136261;for(const ch of String(s)){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
+function dateVN(t){const d=new Date(t);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+" "+pad(d.getHours())+":"+pad(d.getMinutes());}
+
+const ICON = {
+  coin:'<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor" opacity=".25"/><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  flame:'<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1c1 3 4 4.2 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 1.5.6 2.3 1.4 2.6C7 5.5 7.3 3 8 1z"/></svg>',
+};
+
+function periodOf(q){return q.repeat==="daily"?dayKey():q.repeat==="weekly"?weekKey():"once";}
+function subjectOf(q,uid){return q.mode==="team" ? "team:"+(q.team||"") : uid;}
+function subKey(q,uid){return subjectOf(q,uid)+"|"+periodOf(q);}
+function nameOf(id){const p=S.profiles[id];return (p&&p.name)||S.players[id]?.name||(id===S.myId?"Bạn":"Nhân viên");}
+function avatarOf(id){const p=S.profiles[id];return p?p.avatarUrl:"";}
+function initials(id){return nameOf(id).replace(/[^\p{L}\s]/gu,"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();}
+function avatarImg(id,cls="avatar"){const u=avatarOf(id);return u?`<img class="${cls}" src="${esc(u)}" alt="">`:`<span class="${cls} ini" style="--h:${parseInt(hash(id),36)%360}">${esc(initials(id))}</span>`;}
+
+function levelOf(xp){
+  let i=0; LEVELS.forEach((l,k)=>{if(xp>=l.min)i=k;});
+  const cur=LEVELS[i], nx=LEVELS[i+1];
+  return {i, name:cur.n, next:nx?nx.min:null, nextName:nx?nx.n:null, pct:nx?Math.min(100,(xp-cur.min)/(nx.min-cur.min)*100):100};
+}
+const gradeOf = p => p>=90?"A":p>=75?"B":p>=60?"C":"D";
+
+function stats(uid){
+  const mk=monthKey(); let xp=0,xpMonth=0,earned=0,done=0,doneMonth=0,boss=0,learn=0,team=0,penMonth=0,apBook=0,apShow=0,apClose=0;
+  const days=new Set(), entries=[];
+  for(const e of S.ledger){
+    if(e.userId!==uid) continue; entries.push(e);
+    const inM=monthKey(e.at)===mk, x=+e.xp||0;
+    xp+=x; earned+=+e.coins||0; if(inM) xpMonth+=x;
+    if(e.kind==="quest"){done++; if(inM)doneMonth++; if(e.qtype==="boss")boss++; if(e.qtype==="learn")learn++; if(e.teamQuest)team++; days.add(dayKey(e.at));}
+    if(e.kind==="penalty"&&inM) penMonth++;
+    if(e.kind==="appt"){ if(e.step==="book")apBook++; if(e.step==="show")apShow++; if(e.step==="close")apClose++; days.add(dayKey(e.at)); }
+  }
+  const spent=S.redemptions.filter(r=>r.userId===uid&&r.status!=="rejected").reduce((a,r)=>a+(+r.cost||0),0);
+  let best=0,run=0,prev=null;
+  for(const d of [...days].sort()){run=(prev&&daysBetween(prev,d)===1)?run+1:1; best=Math.max(best,run); prev=d;}
+  let streak=0; const t=new Date(); if(!days.has(dayKey(t))) t.setDate(t.getDate()-1);
+  while(days.has(dayKey(t))){streak++; t.setDate(t.getDate()-1);}
+  entries.sort((a,b)=>b.at-a.at);
+  return {xp:Math.max(0,xp), xpMonth, coins:earned-spent, apBook, apShow, apClose, done, doneMonth, boss, learn, team, penMonth, streak, bestStreak:best, entries};
+}
+
+/* ---------- render ---------- */
+let rq=0;
+function render(){ if(rq) return; rq=requestAnimationFrame(()=>{rq=0; renderAll();}); }
+function renderAll(){
+  renderStatus(); renderJoin(); renderMe(); renderTabs();
+  if(S.tab==="quests") renderQuests();
+  if(S.tab==="board") renderBoard();
+  if(S.tab==="appts") renderAppts();
+  if(S.tab==="sales") renderSales();
+  if(S.tab==="shop") renderShop();
+  if(S.tab==="me") renderProfile();
+  if(S.tab==="admin") renderAdmin();
+  refreshProfiles();
+}
+
+function renderStatus(){
+  const el=$("#status");
+  if(!S.ready){ el.innerHTML=`<div class="notice">Đang kết nối dữ liệu chung của đội…</div>`; return; }
+  if(!S.db){ el.innerHTML=`<div class="notice warn">Không kết nối được kho dữ liệu chung. Hãy tải lại trang hoặc đăng nhập lại.</div>`; return; }
+  if(S.user?.demo){ el.innerHTML=`<div class="notice warn"><b>Chế độ thử:</b> dữ liệu chỉ lưu trên trình duyệt này. Bấm "Đăng xuất" để đăng nhập bằng tên khác (thử vai nhân viên). Kết nối Firebase để cả đội dùng chung.</div>`; return; }
+  if(!S.myId){ el.innerHTML=`<div class="notice warn">Bạn đang xem ở chế độ chỉ đọc. Hãy đăng nhập claude.ai để nhận và nộp nhiệm vụ.</div>`; return; }
+  if(S.canWrite===false){ el.innerHTML=`<div class="notice warn">Bạn đang có quyền xem. Nhờ quản lý chia sẻ trang này với quyền <b>Contributor</b> để tham gia làm nhiệm vụ.</div>`; return; }
+  el.innerHTML="";
+}
+
+function renderMe(){
+  const el=$("#mecard");
+  if(!S.myId){ el.innerHTML=""; return; }
+  const s=stats(S.myId), lv=levelOf(s.xp);
+  celebrate(s,lv);
+  el.innerHTML=`${avatarImg(S.myId)}
+    <div class="mebar"><div class="row"><b>${esc(nameOf(S.myId))} · ${esc(lv.name)}</b><span class="num muted">${fmt(s.xp)} XP</span></div>
+      <div class="xpbar" title="${lv.next?`Còn ${fmt(lv.next-s.xp)} XP lên ${lv.nextName}`:"Cấp tối đa"}"><i style="width:${lv.pct}%"></i></div></div>
+    <span class="pill coin">${ICON.coin}<span class="num">${fmt(s.coins)}</span> xu</span>
+    <span class="pill flame" title="Chuỗi ngày liên tiếp có nhiệm vụ được duyệt">${ICON.flame}<span class="num">${s.streak}</span> ngày</span>${S.user?.signOut?`<button class="btn ghost sm" data-act="sign-out">Đăng xuất</button>`:""}`;
+}
+
+function myRank(){
+  const arr=Object.keys(S.players).map(id=>({id,x:stats(id).xpMonth})).sort((a,b)=>b.x-a.x);
+  const i=arr.findIndex(p=>p.id===S.myId); return i<0?null:i+1;
+}
+function renderHero(){
+  const el=$("#herocard");
+  if(!S.myId||!S.players[S.myId]){ el.innerHTML=""; return; }
+  const s=stats(S.myId), lv=levelOf(s.xp), rank=myRank();
+  const vq=visibleQuests().filter(q=>q.repeat==="daily");
+  const dDone=vq.filter(q=>{const x=q.submissions?.[subKey(q,S.myId)];return x&&x.status!=="rejected";}).length;
+  el.innerHTML=`<div class="hero-card">
+    <div class="ring" style="--p:${lv.pct}">${avatarImg(S.myId)}<span class="lvlnum">LV ${lv.i+1}</span></div>
+    <div class="hero-main"><span class="rankname">${esc(lv.name)} · ${esc(S.players[S.myId].team||"")}</span>
+      <span class="title">${esc(nameOf(S.myId))}</span>
+      <div class="xpbar"><i style="width:${lv.pct}%"></i></div>
+      <div class="xpline"><span class="num">${fmt(s.xp)} XP</span><span>${lv.next?`Còn <b class="num">${fmt(lv.next-s.xp)}</b> XP lên <b>${esc(lv.nextName)}</b>`:"Cấp tối đa"}</span></div></div>
+    <div class="tiles"><div class="tile g"><b class="num">${fmt(s.coins)}</b><span>Xu</span></div><div class="tile f"><b class="num">${s.streak}</b><span>Ngày liên tiếp</span></div>
+      <div class="tile r"><b class="num">${rank?"#"+rank:"—"}</b><span>Hạng tháng</span></div><div class="tile x"><b class="num">${fmt(s.xpMonth)}</b><span>XP tháng</span></div></div>
+    ${vq.length?`<div class="daily"><div class="xpline"><span><b>Nhiệm vụ hằng ngày</b></span><span class="num">${dDone}/${vq.length}</span></div><div class="xpbar"><i style="width:${dDone/vq.length*100}%"></i></div></div>`:""}
+  </div>`;
+}
+
+/* game feel: +XP floats, level-up screen, confetti */
+let seenXp=null, seenLv=null;
+function celebrate(s,lv){
+  if(!S.loaded) return;
+  if(seenXp!==null && s.xp>seenXp){ floatXP("+"+fmt(s.xp-seenXp)+" XP"); confetti(60); }
+  if(seenLv!==null && lv.i>seenLv){
+    $("#lu-num").textContent=lv.i+1; $("#lu-name").textContent=lv.name;
+    $("#lu-next").textContent=lv.next?`Mục tiêu tiếp theo: ${lv.nextName} (${fmt(lv.next)} XP)`:"Bạn đã chạm đỉnh. Huyền thoại thật sự!";
+    $("#lvlup").hidden=false; confetti(220);
+  }
+  seenXp=s.xp; seenLv=lv.i;
+}
+function floatXP(text,x,y){
+  const d=document.createElement("div"); d.className="float-xp"; d.textContent=text;
+  d.style.left=(x??innerWidth/2)+"px"; d.style.top=(y??innerHeight*0.18)+"px";
+  document.body.appendChild(d); setTimeout(()=>d.remove(),1700);
+}
+let parts=[], fxRun=false;
+function confetti(n,x,y){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c=$("#fx"); c.width=innerWidth; c.height=innerHeight;
+  const cols=["#FFC83D","#3EE6A8","#5AB8FF","#B57CFF","#FF8A3D","#FF5D73"];
+  for(let i=0;i<n;i++) parts.push({x:x??innerWidth/2,y:y??innerHeight*0.35,vx:(Math.random()-.5)*14,vy:Math.random()*-12-3,r:Math.random()*6+3,c:cols[i%cols.length],a:Math.random()*6,life:90+Math.random()*50});
+  if(fxRun) return; fxRun=true;
+  const ctx=c.getContext("2d");
+  (function step(){
+    ctx.clearRect(0,0,c.width,c.height);
+    parts=parts.filter(p=>p.life-->0);
+    for(const p of parts){p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=.2;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.globalAlpha=Math.min(1,p.life/30);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);ctx.restore();}
+    if(parts.length) requestAnimationFrame(step); else {fxRun=false;ctx.clearRect(0,0,c.width,c.height);}
+  })();
+}
+
+function apWhen(t){ if(!t) return ""; const [d,h]=t.split("T"); const [y,m,dd]=d.split("-"); return `${h||""} · ${dd}/${m}`; }
+function renderAppts(){
+  const R=APPT_REWARD;
+  $("#ap-legend").textContent=`+${R.book.xp} XP đặt hẹn · +${R.show.xp} XP và ${cash(APPT_CASH.show)} mỗi buổi call/học thử diễn ra · +${R.close.xp} XP và ${APPT_CASH.closePct}% hợp đồng khi ${CLOSER} chốt`;
+  setOptions($("#ap-product"),Object.keys(LIBRARY).filter(k=>k!=="Thực tập sinh").map(k=>`<option>${esc(k)}</option>`).join("")+`<option>Khác</option>`);
+  if(!$("#ap-product").dataset.init){ $("#ap-product").value="Coach 1:1 Ads"; $("#ap-product").dataset.init="1"; }
+  const mk=monthKey(), mine=S.appts.filter(a=>S.isMgr||a.by===S.myId);
+  const scope=S.isMgr?S.appts:S.appts.filter(a=>a.by===S.myId);
+  const m=scope.filter(a=>monthKey(a.createdAt)===mk);
+  const showed=m.filter(a=>a.status==="showed"||a.status==="closed").length, closed=m.filter(a=>a.status==="closed").length, settled=m.filter(a=>a.status!=="booked").length;
+  $("#ap-tiles").innerHTML=`<div class="tile g"><b class="num">${m.length}</b><span>${S.isMgr?"Lịch hẹn cả đội":"Hẹn bạn đặt"} tháng này</span></div>
+    <div class="tile x"><b class="num">${settled?Math.round(showed/settled*100):0}%</b><span>Tỷ lệ khách đến</span></div>
+    <div class="tile r"><b class="num">${closed}</b><span>Đã chốt</span></div>
+    <div class="tile f"><b class="num">${showed?Math.round(closed/showed*100):0}%</b><span>Tỷ lệ chốt</span></div>`
+    +(S.isMgr?"":(()=>{const c=commissionOf(S.myId);return `<div class="tile g" style="grid-column:1/-1"><b class="num">${cash(c.total)}</b><span>Hoa hồng dự kiến tháng này · ${c.shows} buổi call/học thử × ${cash(APPT_CASH.show)} + ${APPT_CASH.closePct}% của ${money(c.closedV)} đã chốt</span></div>`;})());
+  $("#ap-formwrap").hidden=!(S.myId&&S.players[S.myId]&&S.canWrite!==false);
+  // leaderboard of setters this month
+  const by={};
+  for(const a of S.appts){ if(monthKey(a.createdAt)!==mk) continue; const r=by[a.by]??={id:a.by,n:0,sh:0,cl:0}; r.n++; if(a.status==="showed"||a.status==="closed") r.sh++; if(a.status==="closed") r.cl++; }
+  const rows=Object.values(by).sort((a,b)=>b.cl-a.cl||b.sh-a.sh||b.n-a.n);
+  $("#ap-board").innerHTML=rows.length?rows.map((r,i)=>`<div class="item ${r.id===S.myId?"me":""}"><div class="who"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span>${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div>
+    <span class="funnel"><span title="Đặt hẹn">${r.n} hẹn</span>›<span class="pos" title="Khách đến">${r.sh} đến</span>›<b style="color:var(--gold)" title="Chốt">${r.cl} chốt</b>${S.isMgr||r.id===S.myId?` · <span title="Hoa hồng dự kiến">${cash(commissionOf(r.id).total)}</span>`:""}</span></div>`).join(""):`<p class="muted small">Chưa có lịch hẹn nào tháng này. Ai đặt hẹn đầu tiên sẽ đứng top!</p>`;
+  // list
+  document.querySelectorAll("#apfilter button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.f===S.apF));
+  $("#ap-list-title").textContent=S.isMgr?"Lịch hẹn của cả đội":"Lịch hẹn bạn đã đặt";
+  const now=new Date(), nowS=dayKey(now)+"T"+pad(now.getHours())+":"+pad(now.getMinutes());
+  let list=mine.filter(a=>S.apF==="upcoming"?a.status==="booked":a.status!=="booked");
+  list.sort(S.apF==="upcoming"?(a,b)=>(a.time||"").localeCompare(b.time||""):(a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  list=list.slice(0,80);
+  $("#ap-list").innerHTML=list.length?list.map(a=>{
+    const late=a.status==="booked"&&a.time&&a.time<nowS;
+    const [lbl,cls]=APPT_STATUS[a.status]||APPT_STATUS.booked;
+    const acts=S.isMgr?`<div class="acts">${["noshow","showed","closed"].map(to=>`<button class="btn sm ${to==="closed"?"good":to==="noshow"?"danger":"ghost"}" data-act="appt" data-to="${to}" data-id="${esc(a.id)}" ${a.status===to?"disabled":""}>${to==="noshow"?"Không đến":to==="showed"?(a.kind==="trial"?"Đã học thử":"Đã call"):"Chốt!"}</button>`).join("")}</div>`:"";
+    return `<div class="item"><div class="l"><span class="ap-when ${late?"late":""}">${esc(apWhen(a.time))}${late?" · cần cập nhật":""}</span>
+      <div><b>${esc(a.customer)}</b> <span class="chip ${a.kind==="trial"?"learn":"task"}">${a.kind==="trial"?"Học thử nhạc":"Call"}</span> <span class="chip">${esc(a.product||"")}</span> <span class="chip ${cls}">${esc(lbl)}</span></div>
+      <div class="muted small">${S.isMgr?`Người đặt: <b>${esc(nameOf(a.by))}</b> · `:""}${esc(a.source||"")}${a.contact?` · ${esc(a.contact)}`:""}</div>
+      ${a.note?`<div class="muted small">“${esc(a.note)}”</div>`:""}</div>${acts}</div>`;
+  }).join(""):`<p class="muted small">${S.apF==="upcoming"?"Không có lịch hẹn nào đang chờ.":"Chưa có lịch hẹn nào được xử lý."}</p>`;
+}
+
+const SWORD='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 2H21v6.5L10.5 19l1.4 1.4-1.4 1.4-2.1-2.1-2.8 2.8-1.4-1.4 2.8-2.8-2.1-2.1 1.4-1.4 1.4 1.4zM19 4h-3.7L7.7 11.6l1.4 1.4L19 7.7z"/></svg>';
+const TROPHY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10v2h4v3a5 5 0 0 1-4.6 5A6 6 0 0 1 13 15.9V19h4v3H7v-3h4v-3.1A6 6 0 0 1 7.6 12 5 5 0 0 1 3 7V4h4zm10 4v4.2A3 3 0 0 0 19 7.5V6zM5 6v1.5a3 3 0 0 0 2 2.7V6z"/></svg>';
+function renderSales(){
+  const mk=monthKey(), d=new Date(), dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(), left=dim-d.getDate()+1;
+  $("#sl-title").textContent=`Boss doanh số tháng ${d.getMonth()+1} · khách hàng mới`;
+  $("#sl-days").textContent=`Còn ${left} ngày`;
+  $("#sl-add").hidden=!S.isMgr; $("#sl-settings").hidden=!S.isMgr;
+  const T=targets(), TI=tiers();
+  let sumT=0,sumA=0,sumFund=0;
+  $("#sl-bosses").innerHTML=Object.entries(T).map(([line,target])=>{
+    const act=lineTotal(line), pct=target?act/target*100:0, need=Math.max(0,target-act);
+    const hit=TI.filter(t=>pct>=t.pct), top=hit[hit.length-1], fund=top?act*top.fund/100:0;
+    sumT+=target; sumA+=act; sumFund+=fund;
+    const w=Math.min(100,pct/1.2);
+    return `<div class="boss-card ${pct>=100?"dead":""}">
+      <div class="boss-top"><span class="boss-ico">${pct>=100?TROPHY:QICON.boss}</span><div style="min-width:0"><span class="rarity" style="color:${pct>=100?"var(--xp)":"var(--legend)"}">${pct>=100?"Đã hạ Boss":"Boss tháng"}</span><div class="boss-name">${esc(line)}</div></div>
+        <span class="grade ${pct>=100?"A":pct>=80?"B":pct>=60?"C":"D"}" style="margin-left:auto;font-size:1.4rem">${Math.floor(pct)}%</span></div>
+      <div class="hp"><i style="width:${w}%"></i>${TI.map(t=>`<span class="mk ${pct>=t.pct?"hit":""}" style="left:${t.pct/1.2}%" title="Mốc ${t.pct}%"></span>`).join("")}<b>${money(act)} / ${money(target)}</b></div>
+      <div class="boss-stats"><span>${need?`Còn thiếu <b>${money(need)}</b>`:"Đã vượt chỉ tiêu"}</span><span>${need?`Cần <b>${money(need/left)}</b>/ngày`:`Vượt <b>${money(act-target)}</b>`}</span></div>
+      <div class="tierrow">${TI.map(t=>`<span class="tier ${pct>=t.pct?"hit":""}">${t.pct}%: quỹ ${t.fund}% · +${t.xp} XP</span>`).join("")}</div>
+      <div class="muted small">Quỹ thưởng đội hiện tại: <b style="color:var(--gold)">${money(fund)}</b> · ${esc((lineTeams()[line]||[]).join(", "))}</div>
+    </div>`;
+  }).join("");
+  const tp=sumT?sumA/sumT*100:0;
+  $("#sl-total").innerHTML=`<div class="section-head"><span class="rankname">Toàn công ty · khách hàng mới</span><span class="num muted small">${Math.floor(tp)}%</span></div>
+    <span class="big num">${money(sumA)} <span class="muted" style="font-size:1rem">/ ${money(sumT)}</span></span>
+    <div class="xpbar" style="height:12px"><i style="width:${Math.min(100,tp)}%;background:linear-gradient(90deg,var(--gold-deep),var(--gold))"></i></div>
+    <span class="muted small">Tổng quỹ thưởng đang mở: <b style="color:var(--gold)">${money(sumFund)}</b></span>`;
+  const by={}; for(const x of S.sales){ if(monthKey(x.at)!==mk||!x.by) continue; const r=by[x.by]??={id:x.by,v:0,n:0}; r.v+=+x.amount||0; r.n++; }
+  const ppl=Object.values(by).sort((a,b)=>b.v-a.v);
+  $("#sl-people").innerHTML=ppl.length?ppl.map((r,i)=>`<div class="item"><div class="who"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span>${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div><span class="num"><b style="color:var(--gold)">${money(r.v)}</b> · ${r.n} HĐ</span></div>`).join(""):`<p class="muted small">Chưa có doanh số nào được ghi công tháng này.</p>`;
+  const rec=S.sales.filter(x=>monthKey(x.at)===mk).sort((a,b)=>b.at-a.at).slice(0,15);
+  $("#sl-recent").innerHTML=rec.length?rec.map(x=>`<div class="item"><div class="l"><b>${esc(x.customer)}</b> <span class="chip">${esc(x.line)}</span><div class="muted small">${dateVN(x.at)}${x.by?` · ${esc(nameOf(x.by))}`:""}</div></div>
+    <div class="acts"><b class="num" style="color:var(--gold)">${money(x.amount)}</b>${S.isMgr?`<button class="btn ghost sm" data-act="sale-del" data-id="${esc(x.id)}">Xoá</button>`:""}</div></div>`).join(""):`<p class="muted small">Chưa có hợp đồng khách mới nào tháng này.</p>`;
+  $("#sl-policy").innerHTML=`<h2>Chính sách thưởng khi đạt doanh số</h2>
+    <div class="tablewrap policy"><table><thead><tr><th>Mốc đạt chỉ tiêu</th><th class="r">Quỹ thưởng đội (tiền)</th><th class="r">Thưởng game mỗi thành viên</th></tr></thead><tbody>
+    ${TI.map(t=>`<tr><td>Từ ${t.pct}%</td><td class="r">${t.fund}% doanh số khách mới của mảng</td><td class="r num">+${fmt(t.xp)} XP · +${fmt(t.coins)} xu</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted small">Chỉ tính tiền đã thu từ khách hàng mới (OT Media chỉ tính phí dịch vụ, không tính ngân sách quảng cáo). Quỹ đội chia 70% theo XP tháng, 30% chia đều. Thực tập sinh: 25.000đ mỗi lịch call hoặc buổi học thử lớp âm nhạc diễn ra, và 3% hợp đồng chốt từ lịch của mình. Người đặt hẹn được ghi công doanh số khi ${CLOSER} chốt khách từ lịch hẹn của họ.</p>`;
+  $("#sl-payroll").hidden=!S.isMgr;
+  if(S.isMgr){
+    const plan=cashPlan(), tot=plan.reduce((a,r)=>a+r.total,0);
+    $("#sl-payroll").innerHTML=`<div class="section-head"><h2>Bảng thưởng tiền tháng ${d.getMonth()+1} (dự kiến)</h2><button class="btn ghost sm" data-act="copy-payroll">Sao chép bảng để dán vào Excel</button></div>
+      ${plan.length?`<div class="tablewrap"><table><thead><tr><th>Nhân viên</th><th>Đội</th><th class="r">XP tháng</th><th class="r">Thưởng đội</th><th class="r">Hoa hồng hẹn</th><th class="r">Tổng</th></tr></thead><tbody>
+      ${plan.map(r=>`<tr><td><div class="who">${avatarImg(r.id)}<span>${esc(nameOf(r.id))}</span></div></td><td>${esc(r.team)}</td><td class="r num">${fmt(r.xp)}</td><td class="r num">${cash(r.fund)}</td><td class="r num">${cash(r.comm)}</td><td class="r num"><b style="color:var(--gold)">${cash(r.total)}</b></td></tr>`).join("")}
+      <tr><td colspan="5"><b>Tổng chi thưởng</b> · ${sumA?((tot/sumA)*100).toLocaleString("vi-VN",{maximumFractionDigits:1}):0}% doanh số</td><td class="r num"><b style="color:var(--gold)">${cash(tot)}</b></td></tr></tbody></table></div>`
+      :`<p class="muted small">Chưa có ai đủ điều kiện nhận thưởng tiền tháng này. Thưởng đội bắt đầu khi mảng đạt 80% chỉ tiêu; hoa hồng đặt hẹn tính khi khách đến.</p>`}
+      <p class="muted small">Số liệu tạm tính theo doanh số đã ghi nhận. Chốt bảng sau khi đối soát tiền đã thu và hoàn tiền.</p>`;
+    const html=Object.entries(T).map(([l,v])=>`<div class="field"><label for="tg-${hash(l)}">${esc(l)} (triệu)</label><input id="tg-${hash(l)}" data-line="${esc(l)}" type="number" min="1" step="1" value="${Math.round(v/1e6)}"></div>`).join("");
+    const box=$("#tg-fields"); if(box.dataset.h!==html&&!box.contains(document.activeElement)){ box.innerHTML=html; box.dataset.h=html; }
+  }
+}
+function openSale(ctx){
+  S.saleCtx=ctx||{};
+  setOptions($("#sl-line"),Object.keys(targets()).map(l=>`<option>${esc(l)}</option>`).join(""));
+  $("#sl-by").innerHTML=`<option value="">Không ghi công cá nhân</option>`+playerOptions(ctx?.by);
+  $("#sl-customer").value=ctx?.customer||""; $("#sl-amount").value="";
+  if(ctx?.line) $("#sl-line").value=ctx.line;
+  $("#sm-sub").textContent=ctx?.apptId?`Chốt lịch hẹn do ${nameOf(ctx.by)} đặt. Người đặt hẹn nhận +${APPT_REWARD.book.xp+APPT_REWARD.show.xp+APPT_REWARD.close.xp} XP.`:"Chỉ ghi doanh số từ khách hàng mới.";
+  $("#salemodal").hidden=false; $("#sl-amount").focus();
+}
+async function recordSale(sale){
+  const mk=monthKey(sale.at), line=sale.line, target=targets()[line]||0;
+  const before=lineTotal(line,mk), after=before+sale.amount;
+  await S.db.collection("sales").add(sale);
+  const newly=[];
+  for(const t of tiers()){
+    if(!target||after/target*100<t.pct) continue;
+    if(before/target*100<t.pct) newly.push(t);
+    for(const u of membersOf(line)){
+      const id=`rv-${mk}-${hash(line)}-${t.pct}-${hash(u)}`;
+      if(S.ledger.some(e=>e.id===id)) continue;
+      await S.db.doc("ledger/"+id).set({userId:u,xp:t.xp,coins:t.coins,kind:"milestone",reason:`${line} đạt ${t.pct}% doanh số tháng ${mk.slice(5)}`,at:Date.now(),by:S.myId});
+    }
+  }
+  if(newly.length){ const t=newly[newly.length-1]; confetti(200); floatXP(`${line} đạt ${t.pct}%!`); }
+}
+
+function renderTabs(){
+  $("#tab-admin").hidden=!S.isMgr;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===S.tab));
+  document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==S.tab);
+  const late=S.appts.filter(a=>a.status==="booked"&&a.time&&new Date(a.time)<new Date()&&(S.isMgr||a.by===S.myId)).length;
+  $("#tab-appts").innerHTML="Lịch hẹn"+(S.isMgr&&late?`<span class="badge num">${late}</span>`:"");
+  if(S.isMgr){
+    const n=pendingSubs().length+S.redemptions.filter(r=>r.status==="pending").length;
+    $("#tab-admin").innerHTML="Quản lý"+(n?`<span class="badge num">${n}</span>`:"");
+  }
+}
+
+function myTeam(){return S.players[S.myId]?.team||null;}
+function visibleQuests(){
+  const me=S.myId, team=myTeam();
+  return S.quests.filter(q=>q.status!=="archived" && (q.mode==="all"||(q.mode==="person"&&q.assignee===me)||((q.mode==="team"||q.mode==="dept")&&q.team===team)));
+}
+
+function renderJoin(){
+  const join=$("#join");
+  if(S.db && S.myId && S.canWrite!==false && !S.players[S.myId]){
+    const opts=(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join("");
+    join.innerHTML=`<div class="panel"><h2>Chào mừng bạn vào Đấu Trường</h2>
+      <p class="muted">Chọn đội hoặc cửa hàng của bạn để bắt đầu nhận nhiệm vụ, tích XP và đổi quà.</p>
+      <div class="frow"><div class="field"><label for="join-team">Đội / cửa hàng</label><select id="join-team">${opts}</select></div></div>
+      <div><button class="btn primary" data-act="join">Tham gia</button></div></div>`;
+  } else join.innerHTML="";
+}
+function renderQuests(){
+  document.querySelectorAll("#qfilter button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.f===S.qf));
+  renderHero();
+  const list=$("#questlist");
+  if(!S.ready){ list.innerHTML=""; return; }
+  const today=dayKey();
+  const rows=visibleQuests().map(q=>{
+    const sub=S.myId?q.submissions?.[subKey(q,S.myId)]:null;
+    const st=!sub?"todo":sub.status==="pending"?"pending":sub.status==="approved"?"done":"todo";
+    return {q,sub,st};
+  }).filter(r=>r.st===S.qf);
+  const order={boss:0,team:1,task:2,weekly:3,daily:4,learn:5};
+  rows.sort((a,b)=>(order[a.q.type]??9)-(order[b.q.type]??9)||(a.q.due||"9").localeCompare(b.q.due||"9"));
+  if(!rows.length){
+    const msg={todo:S.quests.length?"Bạn đã xử lý hết nhiệm vụ. Quay lại sau nhé!":"Chưa có nhiệm vụ nào. Quản lý sẽ giao nhiệm vụ ở tab Quản lý.",pending:"Không có nhiệm vụ nào đang chờ duyệt.",done:"Chưa có nhiệm vụ nào hoàn thành trong kỳ này."}[S.qf];
+    list.innerHTML=`<div class="empty" style="grid-column:1/-1">${msg}</div>`; return;
+  }
+  list.innerHTML=rows.map(({q,sub,st})=>{
+    const T=TYPES[q.type]||TYPES.task;
+    const rep=q.repeat==="daily"?`<span class="chip">Mỗi ngày</span>`:q.repeat==="weekly"?`<span class="chip">Mỗi tuần</span>`:"";
+    const scope=q.mode==="team"?`<span class="chip team">Cả đội ${esc(q.team)}</span>`:q.mode==="dept"?`<span class="chip">${esc(q.team)}</span>`:q.mode==="person"?`<span class="chip">Riêng bạn</span>`:"";
+    const overdue=q.due&&q.due<today&&st!=="done";
+    const due=q.due?`<span class="chip ${overdue?"bad":""}">${overdue?"Quá hạn":"Hạn"} ${esc(q.due.split("-").reverse().slice(0,2).join("/"))}</span>`:"";
+    let action="";
+    if(st==="todo") action=`<button class="btn primary sm" data-act="open-submit" data-id="${esc(q.id)}" ${S.canWrite===false||!S.players[S.myId]?"disabled":""}>${sub?.status==="rejected"?"Nộp lại":"Hoàn thành"}</button>`;
+    if(st==="pending") action=`<span class="chip wait" style="margin-left:auto">Chờ duyệt</span>`;
+    if(st==="done") action=`<span class="chip ok" style="margin-left:auto">Đã nhận thưởng</span>`;
+    const rej=sub?.status==="rejected"&&sub.rejectNote?`<div class="reject-note">Bị trả lại: ${esc(sub.rejectNote)}</div>`:"";
+    return `<article class="quest rar-${T.rar} ${st==="done"?"is-done":""}">
+      <div class="q-head"><span class="qicon">${QICON[q.type]||QICON.task}</span><div class="t"><span class="rarity">${RARITY[T.rar]} · ${esc(T.label)}</span><h3>${esc(q.title)}</h3></div></div>
+      ${rep||scope||due?`<div class="q-top">${rep}${scope}${due}</div>`:""}${q.desc?`<p>${esc(q.desc)}</p>`:""}${rej}
+      <div class="q-foot"><span class="rew xp">+${fmt(+q.xp||0)} XP</span><span class="rew co">+${fmt(+q.coins||0)} xu</span>${action}</div>
+    </article>`;
+  }).join("");
+}
+
+function renderBoard(){
+  document.querySelectorAll("#lbperiod button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.p===S.lbPeriod));
+  document.querySelectorAll("#lbmode button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.m===S.lbMode));
+  const key=S.lbPeriod==="month"?"xpMonth":"xp";
+  const people=Object.entries(S.players).map(([id,p])=>({...stats(id),id,team:p.team}));
+  const pod=$("#podium"), tbl=$("#lbtable");
+  if(!people.length){ pod.innerHTML=""; tbl.innerHTML=`<div class="empty">Chưa có ai tham gia. Bảng xếp hạng sẽ hiện khi nhân viên chọn đội ở tab Nhiệm vụ.</div>`; return; }
+  if(S.lbMode==="person"){
+    people.sort((a,b)=>b[key]-a[key]||b.done-a.done);
+    const top=people.slice(0,3);
+    const ord=[top[1],top[0],top[2]];
+    pod.innerHTML=ord.map((p,i)=>p?`<div class="pod ${i===1?"p1":""}">${i===1?CROWN:`<span class="rank r${[2,1,3][i]}">${[2,1,3][i]}</span>`}${avatarImg(p.id)}<span class="nm">${esc(nameOf(p.id))}</span><span class="num small">${fmt(p[key])} XP</span></div>`:`<div></div>`).join("");
+    tbl.innerHTML=`<table><thead><tr><th>#</th><th>Nhân viên</th><th>Đội</th><th>Cấp</th><th class="r">XP</th><th class="r">Nhiệm vụ</th><th class="r">Chuỗi</th></tr></thead><tbody>`+
+      people.map((p,i)=>`<tr class="${p.id===S.myId?"me":""}"><td><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td>
+        <td><div class="who">${avatarImg(p.id)}<span>${esc(nameOf(p.id))}</span></div></td><td>${esc(p.team||"—")}</td><td>${esc(levelOf(p.xp).name)}</td>
+        <td class="r num">${fmt(p[key])}</td><td class="r num">${fmt(S.lbPeriod==="month"?p.doneMonth:p.done)}</td><td class="r num">${p.streak}</td></tr>`).join("")+`</tbody></table>`;
+  } else {
+    const teams={};
+    for(const p of people){const t=p.team||"Chưa có đội"; (teams[t]??={name:t,xp:0,n:0,done:0}); teams[t].xp+=p[key]; teams[t].n++; teams[t].done+=S.lbPeriod==="month"?p.doneMonth:p.done;}
+    const arr=Object.values(teams).sort((a,b)=>b.xp-a.xp);
+    pod.innerHTML="";
+    tbl.innerHTML=`<table><thead><tr><th>#</th><th>Đội / cửa hàng</th><th class="r">Thành viên</th><th class="r">Tổng XP</th><th class="r">XP / người</th><th class="r">Nhiệm vụ</th></tr></thead><tbody>`+
+      arr.map((t,i)=>`<tr class="${t.name===myTeam()?"me":""}"><td><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td><td>${esc(t.name)}</td>
+        <td class="r num">${t.n}</td><td class="r num">${fmt(t.xp)}</td><td class="r num">${fmt(Math.round(t.xp/t.n))}</td><td class="r num">${fmt(t.done)}</td></tr>`).join("")+`</tbody></table>`;
+  }
+}
+
+function rewardLeft(r){
+  if(r.stock===null||r.stock===undefined||r.stock==="") return null;
+  const pend=S.redemptions.filter(x=>x.rewardId===r.id&&x.status==="pending").length;
+  return Math.max(0,(+r.stock)-pend);
+}
+function renderShop(){
+  const coins=S.myId?stats(S.myId).coins:0;
+  $("#shopcoins").innerHTML=`${ICON.coin}Bạn có <span class="num">${fmt(coins)}</span> xu ≈ ${vnd(coins*XU_VND)}`;
+  const list=$("#rewardlist");
+  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>(b.kind==="chest")-(a.kind==="chest")||a.cost-b.cost);
+  list.innerHTML=rs.length?rs.map(r=>{
+    const left=rewardLeft(r), out=left===0, poor=coins<r.cost, conf=S.confirmRedeem===r.id;
+    const dis=!S.myId||!S.players[S.myId]||S.canWrite===false||out||poor;
+    const rar=r.kind==="chest"?"legend":rewardRar(+r.cost), chest=r.kind==="chest"&&Array.isArray(r.prizes);
+    const odds=chest?(()=>{const t=r.prizes.reduce((a,p)=>a+(+p.w||0),0);return r.prizes.map(p=>`${esc(p.n)}${p.v?` (${fmt(p.v/1000)}k)`:""} ${Math.round(p.w/t*100)}%`).join(" · ");})():"";
+    return `<div class="reward rar-${rar} ${chest?"is-chest":""}"><span class="rarity">${chest?"Rương bí ẩn":RARITY[rar]}${r.value?` · giá trị ≈ ${vnd(r.value)}`:""}</span><span class="gift">${chest?CHEST:GIFT}</span><h3>${esc(r.name)}</h3>${r.desc?`<p class="muted small">${esc(r.desc)}</p>`:""}${chest?`<p class="small odds">${odds}</p>`:""}
+      <span class="cost">${ICON.coin}${fmt(r.cost)} xu</span>
+      <span class="muted small">${left===null?"Không giới hạn":out?"Đã hết":`Còn ${left}`}</span>
+      <button class="btn ${conf?"good":"primary"} sm" data-act="redeem" data-id="${esc(r.id)}" ${dis?"disabled":""}>${out?"Hết quà":poor?`Thiếu ${fmt(r.cost-coins)} xu`:conf?"Bấm lần nữa để xác nhận":chest?"Mở rương":"Đổi quà"}</button></div>`;
+  }).join(""):`<div class="empty" style="grid-column:1/-1">Chưa có phần thưởng. Quản lý thêm phần thưởng ở tab Quản lý.</div>`;
+  const mine=S.redemptions.filter(r=>r.userId===S.myId).sort((a,b)=>b.at-a.at);
+  $("#myredeem").innerHTML=mine.length?mine.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="muted small">${dateVN(r.at)} · ${fmt(r.cost)} xu</div></div>${statusChip(r.status)}</div>`).join(""):`<p class="muted small">Bạn chưa đổi quà nào.</p>`;
+}
+function statusChip(s){return s==="delivered"?`<span class="chip ok">Đã trao</span>`:s==="rejected"?`<span class="chip bad">Từ chối · hoàn xu</span>`:`<span class="chip wait">Chờ trao</span>`;}
+
+function renderProfile(){
+  if(!S.myId){ $("#profilehero").innerHTML=`<p class="muted">Đăng nhập để xem hồ sơ.</p>`; $("#kpicard").innerHTML=""; $("#badgelist").innerHTML=""; $("#history").innerHTML=""; return; }
+  const s=stats(S.myId), lv=levelOf(s.xp);
+  $("#profilehero").innerHTML=`<div class="hero"><div class="lvl-ring" style="--p:${lv.pct}"><div><span>${lv.i+1}<small>Cấp</small></span></div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0"><h2>${esc(nameOf(S.myId))}</h2>
+    <span class="muted">${esc(lv.name)} · ${esc(S.players[S.myId]?.team||"Chưa chọn đội")}</span>
+    <span class="small">${lv.next?`Còn <b class="num">${fmt(lv.next-s.xp)}</b> XP để lên <b>${esc(lv.nextName)}</b>`:"Bạn đã đạt cấp cao nhất"}</span></div></div>
+    <div class="statrow"><div class="stat"><b>${fmt(s.xp)}</b><span>Tổng XP</span></div><div class="stat"><b>${fmt(s.coins)}</b><span>Xu hiện có</span></div>
+    <div class="stat"><b>${fmt(s.done)}</b><span>Nhiệm vụ</span></div><div class="stat"><b>${s.streak}/${s.bestStreak}</b><span>Chuỗi / Kỷ lục</span></div></div>`;
+  const target=+S.config.monthTarget||1000, pct=Math.max(0,Math.round(s.xpMonth/target*100)), g=gradeOf(pct);
+  $("#kpicard").innerHTML=`<div class="section-head"><h2>KPI tháng ${new Date().getMonth()+1}</h2><span class="grade ${g}">${g}</span></div>
+    <div class="xpbar" style="height:12px"><i style="width:${Math.min(100,pct)}%"></i></div>
+    <div class="small"><b class="num">${fmt(s.xpMonth)}</b> / <span class="num">${fmt(target)}</span> XP mục tiêu · <b class="num">${pct}%</b></div>
+    <div class="muted small">Xếp loại: A ≥ 90% · B 75–89% · C 60–74% · D &lt; 60%. ${s.penMonth?`Tháng này bị trừ điểm ${s.penMonth} lần.`:"Tháng này chưa bị trừ điểm."}</div>`;
+  $("#badgelist").innerHTML=BADGES.map(b=>{const ok=b.t(s);return `<div class="bdg ${ok?"":"locked"}"><span class="medal">${esc(b.k)}</span><div><b>${esc(b.n)}</b><span>${esc(b.d)}</span></div></div>`;}).join("");
+  const kindLbl={quest:"Nhiệm vụ",bonus:"Thưởng nóng",penalty:"Trừ điểm",appt:"Lịch hẹn",milestone:"Mốc doanh số"};
+  $("#history").innerHTML=s.entries.length?s.entries.slice(0,40).map(e=>`<div><div class="l"><b>${esc(kindLbl[e.kind]||e.kind)}</b> · ${esc(e.reason)}<div class="muted small">${dateVN(e.at)}</div></div>
+    <div class="num" style="text-align:right;white-space:nowrap"><span class="${e.xp<0?"neg":"pos"}">${signed(+e.xp||0)} XP</span><br><span class="muted small">${signed(+e.coins||0)} xu</span></div></div>`).join(""):`<p class="muted small">Chưa có điểm nào. Hoàn thành nhiệm vụ đầu tiên để nhận XP.</p>`;
+}
+
+function pendingSubs(){
+  const out=[];
+  for(const q of S.quests) for(const [key,sub] of Object.entries(q.submissions||{})) if(sub&&sub.status==="pending") out.push({q,key,sub});
+  return out.sort((a,b)=>a.sub.at-b.sub.at);
+}
+function playerOptions(sel){
+  const ids=Object.keys(S.players).sort((a,b)=>nameOf(a).localeCompare(nameOf(b),"vi"));
+  return ids.length?ids.map(id=>`<option value="${esc(id)}" ${id===sel?"selected":""}>${esc(nameOf(id))} · ${esc(S.players[id].team||"")}</option>`).join(""):`<option value="">Chưa có nhân viên tham gia</option>`;
+}
+function setOptions(el,html){const v=el.value; if(el.dataset.h===html) return; el.innerHTML=html; el.dataset.h=html; if([...el.options].some(o=>o.value===v)) el.value=v;}
+
+function renderAdmin(){
+  if(!S.isMgr) return;
+  const subs=pendingSubs();
+  $("#pendcount").textContent=subs.length;
+  $("#approvals").innerHTML=subs.length?subs.map(({q,key,sub})=>{
+    const rk=q.id+"::"+key, rejecting=S.rejecting[rk];
+    return `<div class="item"><div class="l"><b>${esc(q.title)}</b> <span class="chip ${esc(q.type)}">${esc((TYPES[q.type]||TYPES.task).label)}</span>
+      <div class="small">${esc(nameOf(sub.by))}${q.mode==="team"?` (đội ${esc(q.team)})`:""} · ${dateVN(sub.at)} · <span class="num">+${fmt(+q.xp||0)} XP</span></div>
+      ${sub.note?`<div class="muted small">“${esc(sub.note)}”</div>`:""}</div>
+      <div class="acts">${rejecting?`<input id="rj-${hash(rk)}" placeholder="Lý do trả lại" maxlength="160"><button class="btn danger sm" data-act="reject" data-id="${esc(q.id)}" data-key="${esc(key)}">Gửi</button>`
+        :`<button class="btn danger sm" data-act="ask-reject" data-id="${esc(q.id)}" data-key="${esc(key)}">Trả lại</button><button class="btn good sm" data-act="approve" data-id="${esc(q.id)}" data-key="${esc(key)}">Duyệt</button>`}</div></div>`;
+  }).join(""):`<p class="muted small">Không có nhiệm vụ nào chờ duyệt.</p>`;
+
+  const reds=S.redemptions.filter(r=>r.status==="pending").sort((a,b)=>a.at-b.at);
+  $("#redcount").textContent=reds.length;
+  $("#redeemreqs").innerHTML=reds.length?reds.map(r=>`<div class="item"><div class="l"><b>${esc(r.rewardName)}</b><div class="small">${esc(nameOf(r.userId))} · ${dateVN(r.at)} · ${fmt(r.cost)} xu${r.value?` · cần mua ≈ <b>${vnd(r.value)}</b>`:""}</div></div>
+    <div class="acts"><button class="btn danger sm" data-act="red-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn good sm" data-act="red-deliver" data-id="${esc(r.id)}">Đã trao</button></div></div>`).join(""):`<p class="muted small">Không có yêu cầu nào.</p>`;
+  { const mk=monthKey(), spent=S.redemptions.filter(r=>r.status==="delivered"&&monthKey(r.doneAt||r.at)===mk).reduce((a,r)=>a+(+r.value||0),0);
+    $("#redeemreqs").insertAdjacentHTML("beforeend",`<p class="muted small">Chi phí quà đã trao tháng này: <b style="color:var(--gold)">${vnd(spent)}</b></p>`); }
+
+  setOptions($("#q-tpl"),libraryOptions());
+  setOptions($("#q-type"),Object.entries(TYPES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join(""));
+  if(!$("#q-xp").value){ applyTypeDefaults(); }
+  setOptions($("#q-assignee"),playerOptions());
+  setOptions($("#q-team"),(S.config.teams||[]).map(t=>`<option>${esc(t)}</option>`).join(""));
+  setOptions($("#a-user"),playerOptions());
+  setOptions($("#a-preset"),PRESETS.map((p,i)=>`<option value="${i}">${esc(p.label)}</option>`).join(""));
+  if(!$("#a-reason").value) applyPreset();
+
+  const act=S.quests.filter(q=>q.status!=="archived").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  $("#activequests").innerHTML=act.length?act.map(q=>{
+    const n=Object.values(q.submissions||{}).filter(s=>s.status==="approved").length;
+    const to=q.mode==="all"?"Tất cả":q.mode==="team"?"Cả đội "+q.team:q.mode==="dept"?"Từng người · "+q.team:nameOf(q.assignee);
+    return `<div class="item"><div class="l"><b>${esc(q.title)}</b> <span class="chip ${esc(q.type)}">${esc((TYPES[q.type]||TYPES.task).label)}</span>
+      <div class="muted small">${esc(to)} · ${q.repeat==="daily"?"mỗi ngày":q.repeat==="weekly"?"mỗi tuần":"một lần"} · +${fmt(+q.xp||0)} XP / +${fmt(+q.coins||0)} xu · ${n} lượt đã duyệt</div></div>
+      <div class="acts"><button class="btn ghost sm" data-act="archive" data-id="${esc(q.id)}">Lưu trữ</button></div></div>`;
+  }).join(""):`<p class="muted small">Chưa có nhiệm vụ nào.</p>`;
+
+  const rs=S.rewards.filter(r=>!r.archived).sort((a,b)=>a.cost-b.cost);
+  $("#rewardadmin").innerHTML=rs.map(r=>`<div class="item"><div class="l"><b>${esc(r.name)}</b><div class="muted small">${fmt(r.cost)} xu${r.value?` · ≈ ${vnd(r.value)}`:""} · ${rewardLeft(r)===null?"không giới hạn":"còn "+rewardLeft(r)}</div></div>
+    <div class="acts"><button class="btn ghost sm" data-act="reward-del" data-id="${esc(r.id)}">Gỡ</button></div></div>`).join("");
+
+  const ta=$("#s-teams"), tg=$("#s-target");
+  if(document.activeElement!==ta && ta.dataset.v!==(S.config.teams||[]).join("\n")){ ta.value=(S.config.teams||[]).join("\n"); ta.dataset.v=ta.value; }
+  if(document.activeElement!==tg && !tg.dataset.touched) tg.value=S.config.monthTarget||1000;
+
+  const teamOpts=t=>(S.config.teams||[]).map(x=>`<option ${x===t?"selected":""}>${esc(x)}</option>`).join("");
+  const pl=Object.entries(S.players).sort((a,b)=>nameOf(a[0]).localeCompare(nameOf(b[0]),"vi"));
+  $("#playeradmin").innerHTML=pl.map(([id,p])=>`<div class="item"><div class="l"><div class="who">${avatarImg(id)}<span>${esc(nameOf(id))}</span></div></div>
+    <div class="acts">${S.webMode&&id!==S.myId?`<button class="btn ghost sm" data-act="toggle-admin" data-id="${esc(id)}">${(S.config.admins||[]).includes(id)?"Bỏ quyền QL":"Cấp quyền QL"}</button>`:""}<select id="pt-${hash(id)}" data-act="player-team" data-id="${esc(id)}" aria-label="Đội của ${esc(nameOf(id))}">${teamOpts(p.team)}${(S.config.teams||[]).includes(p.team)?"":`<option selected>${esc(p.team||"")}</option>`}</select></div></div>`).join("");
+}
+function applyTypeDefaults(){const t=TYPES[$("#q-type").value]||TYPES.task; $("#q-xp").value=t.xp; $("#q-coins").value=t.coins; if($("#q-type").value==="daily") $("#q-repeat").value="daily"; if($("#q-type").value==="weekly") $("#q-repeat").value="weekly"; if($("#q-type").value==="team") {$("#q-mode").value="team"; modeChanged();}}
+function applyPreset(){const p=PRESETS[+$("#a-preset").value||0]; $("#a-reason").value=p.label==="Khác"?"":p.label.replace(/^[^:]+:\s*/,""); $("#a-xp").value=p.xp; $("#a-coins").value=p.coins;}
+function modeChanged(){const m=$("#q-mode").value; $("#q-assignee-wrap").hidden=m!=="person"; $("#q-team-wrap").hidden=m!=="team"&&m!=="dept";}
+function libraryOptions(){
+  return `<option value="">— Tự soạn nhiệm vụ —</option>`+Object.entries(LIBRARY).map(([d,list])=>`<optgroup label="${esc(d)}">${list.map((q,i)=>`<option value="${esc(d)}::${i}">${esc((TYPES[q[0]]||TYPES.task).label)} · ${esc(q[1])}</option>`).join("")}</optgroup>`).join("");
+}
+function applyTemplate(){
+  const v=$("#q-tpl").value; if(!v) return;
+  const [d,i]=v.split("::"), t=LIBRARY[d][+i], T=TYPES[t[0]];
+  $("#q-title").value=t[1]; $("#q-desc").value=t[2]; $("#q-type").value=t[0];
+  $("#q-xp").value=T.xp; $("#q-coins").value=T.coins; $("#q-repeat").value=t[3];
+  $("#q-mode").value=t[4];
+  if([...$("#q-team").options].some(o=>o.value===d)) $("#q-team").value=d;
+  modeChanged();
+}
+
+/* profiles: resolve names of everyone on screen, re-render only when something changed */
+let profSig="";
+async function refreshProfiles(){
+  if(!S.user) return;
+  const ids=new Set(Object.keys(S.players)); if(S.myId) ids.add(S.myId);
+  S.redemptions.forEach(r=>ids.add(r.userId));
+  if(!ids.size) return;
+  const ps=await S.user.profiles([...ids]);
+  const sig=[...ids].map(i=>i+":"+(ps[i]?.name||"")+(ps[i]?.avatarUrl||"").length).join(",");
+  if(sig===profSig) return; profSig=sig; S.profiles=ps; render();
+}
+
+/* ---------- actions ---------- */
+function toast(msg){const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2600);}
+async function run(fn,okMsg){
+  try{ await fn(); if(okMsg) toast(okMsg); }
+  catch(e){
+    const c=e&&e.code;
+    toast(c==="invalid_argument"?"Bạn không có quyền thực hiện thao tác này.":c==="quota_exceeded"?"Kho dữ liệu đã đầy. Hãy lưu trữ bớt dữ liệu cũ.":"Chưa lưu được, thử lại sau ít phút.");
+    console.error(e);
+  }
+}
+
+document.addEventListener("click", async ev=>{
+  const tab=ev.target.closest("#tabs button"); if(tab){ S.tab=tab.dataset.tab; try{localStorage.setItem("dtnv-tab",S.tab)}catch{} renderAll(); return; }
+  const f=ev.target.closest("#qfilter button"); if(f){ S.qf=f.dataset.f; renderQuests(); return; }
+  const p=ev.target.closest("#lbperiod button"); if(p){ S.lbPeriod=p.dataset.p; renderBoard(); return; }
+  const m=ev.target.closest("#lbmode button"); if(m){ S.lbMode=m.dataset.m; renderBoard(); return; }
+  const af=ev.target.closest("#apfilter button"); if(af){ S.apF=af.dataset.f; renderAppts(); return; }
+  if(ev.target.id==="modal"){ closeModal(); return; }
+  const b=ev.target.closest("[data-act]"); if(!b||b.tagName==="SELECT") return;
+  const id=b.dataset.id, key=b.dataset.key, db=S.db;
+  switch(b.dataset.act){
+    case "join": {
+      const team=$("#join-team")?.value||"";
+      const data={team, joinedAt:Date.now()};
+      if(S.webMode){ const me=await S.user.me(); if(me.name) data.name=me.name; }
+      await run(()=>db.doc("players/"+S.myId).set(data),"Chào mừng chiến binh mới!");
+      break;
+    }
+    case "open-submit": {
+      const q=S.quests.find(x=>x.id===id); if(!q) return;
+      S.submitting=id; $("#m-title").textContent=q.title; $("#m-desc").textContent=q.desc||"Mô tả ngắn kết quả để quản lý duyệt.";
+      $("#m-proof").value=""; $("#modal").hidden=false; $("#m-proof").focus(); break;
+    }
+    case "close-modal": closeModal(); break;
+    case "close-lvl": $("#lvlup").hidden=true; break;
+    case "close-chest": $("#chestbox").hidden=true; break;
+    case "open-sale": openSale(); break;
+    case "copy-payroll": {
+      const tsv=["Nhân viên\tĐội\tXP tháng\tThưởng đội (đ)\tHoa hồng hẹn (đ)\tTổng (đ)",...cashPlan().map(r=>[nameOf(r.id),r.team,r.xp,Math.round(r.fund),Math.round(r.comm),Math.round(r.total)].join("\t"))].join("\n");
+      navigator.clipboard.writeText(tsv).then(()=>toast("Đã sao chép. Mở Excel/Google Sheets và dán (Ctrl+V)."),()=>toast("Không sao chép được trên trình duyệt này. Hãy bôi đen bảng để copy."));
+      break;
+    }
+    case "close-sale": $("#salemodal").hidden=true; S.saleCtx=null; break;
+    case "sale-del": await run(()=>db.doc("sales/"+id).delete(),"Đã xoá doanh số"); break;
+    case "appt": {
+      const a=S.appts.find(x=>x.id===id), to=b.dataset.to; if(!a) return;
+      if(to==="closed"){ openSale({apptId:id,by:a.by,customer:a.customer,line:lineOfProduct(a.product)}); break; }
+      await setApptStatus(a,to); break;
+    }
+
+    case "toggle-admin": {
+      const a=new Set(S.config.admins||[]); a.has(id)?a.delete(id):a.add(id);
+      await run(()=>db.doc("config/settings").set({...S.config,admins:[...a]}),"Đã cập nhật quyền quản lý"); break;
+    }
+    case "sign-out": await S.user.signOut(); location.reload(); break;
+    case "confirm-submit": {
+      const q=S.quests.find(x=>x.id===S.submitting); if(!q) return;
+      const k=subKey(q,S.myId), note=$("#m-proof").value.trim();
+      b.disabled=true;
+      await run(()=>db.doc("quests/"+q.id).update({submissions:{[k]:{by:S.myId,subject:subjectOf(q,S.myId),period:periodOf(q),note,at:Date.now(),status:"pending",rejectNote:""}}}),"Đã nộp, chờ quản lý duyệt");
+      b.disabled=false; closeModal(); confetti(40); break;
+    }
+    case "approve": {
+      const q=S.quests.find(x=>x.id===id), sub=q?.submissions?.[key]; if(!sub) return;
+      const recips=q.mode==="team"?Object.entries(S.players).filter(([,p])=>p.team===q.team).map(([u])=>u):[sub.by];
+      b.disabled=true;
+      await run(async()=>{
+        for(const u of recips) await db.doc("ledger/q-"+hash(q.id+"|"+key+"|"+u)).set({userId:u,xp:+q.xp||0,coins:+q.coins||0,kind:"quest",qtype:q.type,teamQuest:q.mode==="team",questId:q.id,reason:q.title,at:Date.now(),by:S.myId});
+        await db.doc("quests/"+q.id).update({submissions:{[key]:{status:"approved",reviewedBy:S.myId,reviewedAt:Date.now()}}});
+      },`Đã duyệt · +${q.xp} XP cho ${recips.length} người`);
+      { const r=b.getBoundingClientRect(); confetti(30,r.left+r.width/2,r.top); }
+      break;
+    }
+    case "ask-reject": S.rejecting[id+"::"+key]=true; renderAdmin(); $("#rj-"+hash(id+"::"+key))?.focus(); break;
+    case "reject": {
+      const note=($("#rj-"+hash(id+"::"+key))?.value||"").trim();
+      if(!note){ toast("Nhập lý do để nhân viên biết cần sửa gì."); return; }
+      delete S.rejecting[id+"::"+key];
+      await run(()=>db.doc("quests/"+id).update({submissions:{[key]:{status:"rejected",rejectNote:note,reviewedBy:S.myId,reviewedAt:Date.now()}}}),"Đã trả lại nhiệm vụ");
+      break;
+    }
+    case "archive": await run(()=>db.doc("quests/"+id).update({status:"archived"}),"Đã lưu trữ nhiệm vụ"); break;
+    case "redeem": {
+      if(S.confirmRedeem!==id){ S.confirmRedeem=id; renderShop(); clearTimeout(S.crT); S.crT=setTimeout(()=>{S.confirmRedeem=null; renderShop();},4000); return; }
+      S.confirmRedeem=null;
+      const r=S.rewards.find(x=>x.id===id); if(!r) return;
+      if(stats(S.myId).coins<r.cost){ toast("Bạn chưa đủ xu."); renderShop(); return; }
+      if(r.kind==="chest"&&Array.isArray(r.prizes)&&r.prizes.length){
+        const prize=pickPrize(r.prizes);
+        await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:`${r.name}: ${prize.n}`,prize:prize.n,value:+prize.v||0,cost:+r.cost,status:"pending",at:Date.now()}));
+        openChest(prize, r.prizes);
+        break;
+      }
+      await run(()=>db.collection("redemptions").add({userId:S.myId,rewardId:r.id,rewardName:r.name,value:+r.value||0,cost:+r.cost,status:"pending",at:Date.now()}),"Đã gửi yêu cầu đổi quà");
+      break;
+    }
+    case "red-deliver": {
+      const red=S.redemptions.find(x=>x.id===id), r=S.rewards.find(x=>x.id===red?.rewardId);
+      await run(async()=>{
+        await db.doc("redemptions/"+id).update({status:"delivered",doneBy:S.myId,doneAt:Date.now()});
+        if(r&&r.stock!==null&&r.stock!==undefined&&r.stock!=="") await db.doc("rewards/"+r.id).update({stock:Math.max(0,(+r.stock)-1)});
+      },"Đã đánh dấu trao quà"); break;
+    }
+    case "red-reject": await run(()=>db.doc("redemptions/"+id).update({status:"rejected",doneBy:S.myId,doneAt:Date.now()}),"Đã từ chối, xu được hoàn lại"); break;
+    case "reward-del": await run(()=>db.doc("rewards/"+id).update({archived:true}),"Đã gỡ phần thưởng"); break;
+  }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#modal").hidden) closeModal(); });
+async function setApptStatus(a,to){
+  const id=a.id, db=S.db, keep=APPT_STEPS[to];
+  await run(async()=>{
+    for(const st of ["book","show","close"]){
+      const ref=db.doc(`ledger/ap-${id}-${st}`);
+      if(keep.includes(st)) await ref.set({userId:a.by,xp:APPT_REWARD[st].xp,coins:APPT_REWARD[st].coins,kind:"appt",step:st,apptId:id,reason:`${APPT_REWARD[st].label}: ${a.customer}`,at:Date.now(),by:S.myId});
+      else await ref.delete();
+    }
+    await db.doc("appointments/"+id).update({status:to,doneBy:S.myId,doneAt:Date.now()});
+  }, to==="closed"?`Chốt rồi! +${APPT_REWARD.book.xp+APPT_REWARD.show.xp+APPT_REWARD.close.xp} XP cho ${nameOf(a.by)}`:"Đã cập nhật lịch hẹn");
+}
+function openChest(prize,prizes){
+  const t=prizes.reduce((a,p)=>a+(+p.w||0),0), pct=prize.w/t*100;
+  const rar=pct<=3?"legend":pct<=10?"epic":pct<=25?"rare":"common";
+  const box=$("#chestbox"); box.hidden=false;
+  const m=box.querySelector(".modal"); m.className="modal levelup chest-open rar-"+rar;
+  $("#cb-prize").textContent=""; $("#cb-rar").textContent=""; $("#cb-note").textContent="Đang mở rương…";
+  setTimeout(()=>{
+    $("#cb-rar").textContent=RARITY[rar]+` · tỉ lệ ${pct.toLocaleString("vi-VN",{maximumFractionDigits:1})}%`;
+    $("#cb-prize").textContent=prize.n; $("#cb-note").textContent="Quản lý sẽ trao quà cho bạn. Xem ở Lịch sử đổi quà.";
+    m.classList.add("revealed"); confetti(rar==="legend"?260:rar==="epic"?160:80);
+  },1100);
+}
+function closeModal(){ $("#modal").hidden=true; S.submitting=null; }
+
+document.addEventListener("change", e=>{
+  if(e.target.id==="q-type") applyTypeDefaults();
+  if(e.target.id==="q-tpl") applyTemplate();
+  if(e.target.id==="q-mode") modeChanged();
+  if(e.target.id==="a-preset") applyPreset();
+  if(e.target.id==="ap-kind") $("#ap-product").value=APPT_KINDS[e.target.value].product;
+  if(e.target.id==="s-target") e.target.dataset.touched="1";
+  if(e.target.dataset.act==="player-team") run(()=>S.db.doc("players/"+e.target.dataset.id).update({team:e.target.value}),"Đã đổi đội");
+});
+
+$("#f-quest").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const mode=$("#q-mode").value;
+  const q={title:$("#q-title").value.trim(), desc:$("#q-desc").value.trim(), type:$("#q-type").value,
+    xp:Math.max(0,+$("#q-xp").value||0), coins:Math.max(0,+$("#q-coins").value||0), mode,
+    assignee:mode==="person"?$("#q-assignee").value:null, team:(mode==="team"||mode==="dept")?$("#q-team").value:null,
+    repeat:$("#q-repeat").value, due:$("#q-due").value||null, status:"active", createdBy:S.myId, createdAt:Date.now(), submissions:{}};
+  if(!q.title) return;
+  if(mode==="person"&&!q.assignee){ toast("Chưa có nhân viên nào để giao."); return; }
+  await run(()=>S.db.collection("quests").add(q),"Đã giao nhiệm vụ");
+  $("#q-title").value=""; $("#q-desc").value=""; $("#q-due").value=""; $("#q-tpl").value="";
+});
+$("#f-adjust").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const xp=+$("#a-xp").value||0, coins=+$("#a-coins").value||0, userId=$("#a-user").value;
+  if(!userId) return;
+  await run(()=>S.db.collection("ledger").add({userId,xp,coins,kind:xp<0||coins<0?"penalty":"bonus",reason:$("#a-reason").value.trim(),at:Date.now(),by:S.myId}),
+    `Đã ghi ${signed(xp)} XP cho ${nameOf(userId)}`);
+});
+$("#f-sale").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const ctx=S.saleCtx||{}, amount=Math.round((+$("#sl-amount").value||0)*1e6);
+  if(amount<=0) return;
+  const sale={line:$("#sl-line").value, customer:$("#sl-customer").value.trim(), amount, by:$("#sl-by").value||null, apptId:ctx.apptId||null, newCustomer:true, at:Date.now(), recordedBy:S.myId};
+  $("#salemodal").hidden=true; S.saleCtx=null;
+  if(ctx.apptId){ const a=S.appts.find(x=>x.id===ctx.apptId); if(a) await setApptStatus(a,"closed"); confetti(80); }
+  await run(()=>recordSale(sale),`Đã ghi ${money(amount)} cho ${sale.line}`);
+});
+$("#f-targets").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const t={}; document.querySelectorAll("#tg-fields input").forEach(i=>{ t[i.dataset.line]=Math.max(1,+i.value||1)*1e6; });
+  await run(()=>S.db.doc("config/settings").set({...S.config,targets:t}),"Đã lưu chỉ tiêu doanh số");
+});
+$("#f-appt").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const a={by:S.myId, kind:$("#ap-kind").value, customer:$("#ap-name").value.trim(), contact:$("#ap-contact").value.trim(), time:$("#ap-time").value,
+    product:$("#ap-product").value, source:$("#ap-source").value, note:$("#ap-note").value.trim(), status:"booked", createdAt:Date.now()};
+  if(!a.customer||!a.time) return;
+  await run(()=>S.db.collection("appointments").add(a),`Đã đặt hẹn cho ${CLOSER}. Khách đến là +${APPT_REWARD.show.xp} XP!`);
+  ["#ap-name","#ap-contact","#ap-time","#ap-note"].forEach(x=>$(x).value="");
+  confetti(30);
+});
+$("#f-reward").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const st=$("#r-stock").value;
+  const value=Math.max(1,+$("#r-value").value||0)*1000;
+  await run(()=>S.db.collection("rewards").add({name:$("#r-name").value.trim(),value,cost:Math.max(1,+$("#r-cost").value||Math.round(value/XU_VND)),stock:st===""?null:Math.max(0,+st),createdAt:Date.now()}),"Đã thêm phần thưởng");
+  e.target.reset();
+});
+$("#f-settings").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const teams=$("#s-teams").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  await run(()=>S.db.doc("config/settings").set({...S.config,teams:teams.length?teams:Object.keys(LIBRARY),monthTarget:Math.max(1,+$("#s-target").value||1000)}),"Đã lưu cài đặt");
+  delete $("#s-target").dataset.touched;
+});
+
+/* ---------- boot ---------- */
+async function init(){
+  try{ const t=localStorage.getItem("dtnv-tab"); if(t&&t!=="admin") S.tab=t; }catch{}
+  const h=location.hash.slice(1); if(["quests","appts","sales","board","shop","me","admin"].includes(h)) S.tab=h;
+  renderAll();
+  const host=(window.claude&&window.claude.use)?window.claude:window.DTNV_BACKEND;
+  S.webMode=!!(host&&host===window.DTNV_BACKEND);
+  const [db,user]=host?await Promise.all([host.use("db"),host.use("user")]):[null,null];
+  S.db=db; S.user=user;
+  if(user){ S.myId=await user.id(); S.isMgr=await user.canEdit(); S.canWrite=await user.can("data.write"); }
+  if(S.tab==="admin"&&!S.isMgr) S.tab="quests";
+  S.ready=true;
+  if(!db){ renderAll(); return; }
+  const onErr=e=>{ if(e&&e.code!=="revoked") toast("Mất kết nối dữ liệu, hãy tải lại trang."); };
+  const coll=(path,set)=>db.collection(path).onSnapshot(snap=>{ set(snap.docs.map(d=>({id:d.id,...d.data()}))); render(); }, onErr);
+  coll("quests", a=>S.quests=a);
+  coll("appointments", a=>S.appts=a);
+  coll("sales", a=>S.sales=a);
+  coll("ledger", a=>S.ledger=a);
+  coll("rewards", a=>S.rewards=a);
+  coll("redemptions", a=>S.redemptions=a);
+  coll("players", a=>{ S.players=Object.fromEntries(a.map(p=>[p.id,p])); });
+  db.doc("config/settings").onSnapshot(d=>{ if(d.exists) S.config={...S.config,...d.data()}; render(); }, onErr);
+  setTimeout(()=>{ S.loaded=true; render(); },1500);
+  renderAll();
+}
+init();
+</script>
+
+</body>
+</html>
